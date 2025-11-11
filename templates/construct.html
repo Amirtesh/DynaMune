@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccine Constructor - Vaccine Builder</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3Dmol.js for protein structure visualization -->
+    <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Banner -->
+    <div class="app-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-syringe header-icon"></i>
+                    <div>
+                        <h1 class="app-title mb-0">Automated Multi Epitope Vaccine Builder</h1>
+                        <p class="app-subtitle mb-0">Vaccine Constructor</p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/screening" class="btn btn-outline-light btn-sm me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Screening
+                    </a>
+                    <a href="/" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        
+        <!-- Selection Summary -->
+        <div class="construct-summary fade-in">
+            <h3><i class="fas fa-clipboard-list"></i> Selected Epitopes Summary</h3>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="epitope-summary-card">
+                        <i class="fas fa-microscope"></i>
+                        <div>
+                            <h4 id="bcellCountDisplay">0</h4>
+                            <p>B-Cell Epitopes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="epitope-summary-card">
+                        <i class="fas fa-shield-virus"></i>
+                        <div>
+                            <h4 id="mhc1CountDisplay">0</h4>
+                            <p>MHC-I Epitopes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="epitope-summary-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <h4 id="mhc2CountDisplay">0</h4>
+                            <p>MHC-II Epitopes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjuvant Selection -->
+        <div class="adjuvant-section slide-up">
+            <h3><i class="fas fa-flask"></i> Select Adjuvant</h3>
+            <p class="text-muted">Choose an immunostimulatory adjuvant to enhance vaccine efficacy</p>
+            
+            <div class="row">
+                {% for adjuvant_name, sequence in adjuvants.items() %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="adjuvant-card" data-adjuvant="{{ adjuvant_name }}">
+                        <input type="radio" name="adjuvant" value="{{ adjuvant_name }}" id="adj_{{ loop.index }}">
+                        <label for="adj_{{ loop.index }}">
+                            <div class="adjuvant-header">
+                                <i class="fas fa-vial"></i>
+                                <h5>{{ adjuvant_name }}</h5>
+                            </div>
+                            <div class="adjuvant-details">
+                                <p class="sequence-preview" style="word-break: break-all; font-size: 0.85rem;">{{ sequence }}</p>
+                                <small style="color: #ffffff; font-weight: 600;">Length: {{ sequence|length }} aa</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Construct Design Selection -->
+        <div class="construct-design-section slide-up">
+            <h3><i class="fas fa-project-diagram"></i> Select Construct Design</h3>
+            <p class="text-muted">Choose how epitopes should be arranged in the vaccine construct (CTL = MHC-I, HTL = MHC-II, B = B-cell)</p>
+            
+            <div class="design-options">
+                <!-- Design 1: Sequential CTL-HTL-B -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design1" id="design1" checked>
+                    <label for="design1">
+                        <div class="design-header">
+                            <h5>Design 1: Sequential (CTL → HTL → B-cell)</h5>
+                            <span class="design-badge">Default</span>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[CTL1]-AAY-[CTL2]-AAY-[CTL3]-GPGPG-[HTL1]-GPGPG-[HTL2]-GPGPG-[HTL3]-KK-[B1]-KK-[B2]-KK-[B3]</code>
+                        </div>
+                        <p class="design-description">MHC-I epitopes first, followed by MHC-II, then B-cell epitopes</p>
+                    </label>
+                </div>
+
+                <!-- Design 2: Sequential HTL-CTL-B -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design2" id="design2">
+                    <label for="design2">
+                        <div class="design-header">
+                            <h5>Design 2: Sequential (HTL → CTL → B-cell)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[HTL1]-GPGPG-[HTL2]-GPGPG-[HTL3]-AAY-[CTL1]-AAY-[CTL2]-AAY-[CTL3]-KK-[B1]-KK-[B2]-KK-[B3]</code>
+                        </div>
+                        <p class="design-description">MHC-II epitopes first, followed by MHC-I, then B-cell epitopes</p>
+                    </label>
+                </div>
+
+                <!-- Design 3: Sequential B-HTL-CTL -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design3" id="design3">
+                    <label for="design3">
+                        <div class="design-header">
+                            <h5>Design 3: Sequential (B-cell → HTL → CTL)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[B1]-KK-[B2]-KK-[B3]-AAY-[HTL1]-GPGPG-[HTL2]-GPGPG-[HTL3]-AAY-[CTL1]-AAY-[CTL2]-AAY-[CTL3]</code>
+                        </div>
+                        <p class="design-description">B-cell epitopes first, followed by MHC-II, then MHC-I epitopes</p>
+                    </label>
+                </div>
+
+                <!-- Design 4: Alternating CTL-HTL-B -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design4" id="design4">
+                    <label for="design4">
+                        <div class="design-header">
+                            <h5>Design 4: Alternating (CTL-HTL-B Pattern)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[CTL1]-AAY-[HTL1]-GPGPG-[B1]-KK-[CTL2]-AAY-[HTL2]-GPGPG-[B2]-KK-[CTL3]-AAY-[HTL3]-GPGPG-[B3]</code>
+                        </div>
+                        <p class="design-description">Epitopes alternate in CTL-HTL-B pattern throughout the construct</p>
+                    </label>
+                </div>
+
+                <!-- Design 5: Alternating HTL-B-CTL -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design5" id="design5">
+                    <label for="design5">
+                        <div class="design-header">
+                            <h5>Design 5: Alternating (HTL-B-CTL Pattern)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[HTL1]-GPGPG-[B1]-KK-[CTL1]-AAY-[HTL2]-GPGPG-[B2]-KK-[CTL2]-AAY-[HTL3]-GPGPG-[B3]-KK-[CTL3]</code>
+                        </div>
+                        <p class="design-description">Epitopes alternate in HTL-B-CTL pattern throughout the construct</p>
+                    </label>
+                </div>
+
+                <!-- Design 6: Alternating CTL-B-HTL -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design6" id="design6">
+                    <label for="design6">
+                        <div class="design-header">
+                            <h5>Design 6: Alternating (CTL-B-HTL Pattern)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[CTL1]-AAY-[B1]-KK-[HTL1]-GPGPG-[CTL2]-AAY-[B2]-KK-[HTL2]-GPGPG-[CTL3]-AAY-[B3]-KK-[HTL3]</code>
+                        </div>
+                        <p class="design-description">Epitopes alternate in CTL-B-HTL pattern throughout the construct</p>
+                    </label>
+                </div>
+
+                <!-- Design 7: Alternating B-CTL-HTL -->
+                <div class="design-card">
+                    <input type="radio" name="construct_design" value="design7" id="design7">
+                    <label for="design7">
+                        <div class="design-header">
+                            <h5>Design 7: Alternating (B-CTL-HTL Pattern)</h5>
+                        </div>
+                        <div class="design-example">
+                            <code>[ADJUVANT]-EAAAK-[B1]-KK-[CTL1]-AAY-[HTL1]-GPGPG-[B2]-KK-[CTL2]-AAY-[HTL2]-GPGPG-[B3]-KK-[CTL3]-AAY-[HTL3]</code>
+                        </div>
+                        <p class="design-description">Epitopes alternate in B-CTL-HTL pattern throughout the construct</p>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Epitopes Display -->
+        <div class="epitopes-display slide-up">
+            <h3><i class="fas fa-list-check"></i> Selected Epitopes</h3>
+            
+            <div class="epitope-list-container">
+                <div class="epitope-list-section">
+                    <h5><i class="fas fa-microscope"></i> B-Cell Epitopes</h5>
+                    <div id="bcellEpitopesList" class="epitope-badges"></div>
+                </div>
+                
+                <div class="epitope-list-section">
+                    <h5><i class="fas fa-shield-virus"></i> MHC-I Epitopes (CTL)</h5>
+                    <div id="mhc1EpitopesList" class="epitope-badges"></div>
+                </div>
+                
+                <div class="epitope-list-section">
+                    <h5><i class="fas fa-shield-alt"></i> MHC-II Epitopes (HTL)</h5>
+                    <div id="mhc2EpitopesList" class="epitope-badges"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Construct Button -->
+        <div class="text-center mt-5">
+            <button class="btn btn-primary btn-construct btn-lg" id="buildConstructBtn">
+                <i class="fas fa-hammer"></i> Build Vaccine Construct
+                <span class="btn-glow"></span>
+            </button>
+        </div>
+
+        <!-- Construct Result -->
+        <div class="construct-result" id="constructResult" style="display: none;">
+            <div class="result-header">
+                <h3><i class="fas fa-dna"></i> Vaccine Construct</h3>
+                <div class="construct-stats">
+                    <span class="stat-badge">
+                        <i class="fas fa-ruler"></i> Length: <strong id="constructLength">0</strong> aa
+                    </span>
+                </div>
+            </div>
+            
+            <div class="sequence-viewer">
+                <div class="sequence-header">
+                    <span><i class="fas fa-code"></i> Final Sequence</span>
+                    <div>
+                        <button class="btn btn-sm btn-icon" id="copyBtn" title="Copy to Clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-sm btn-icon" id="downloadBtn" title="Download FASTA">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="sequence-content" id="sequenceContent"></div>
+            </div>
+
+            <div class="construct-visualization mt-4">
+                <h5><i class="fas fa-project-diagram"></i> Construct Schematic</h5>
+                <div class="schematic-display" id="schematicDisplay"></div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/download_construct" class="btn btn-success btn-lg">
+                    <i class="fas fa-file-download"></i> Download FASTA
+                </a>
+                <button class="btn btn-outline-primary btn-lg" id="copySequenceBtn">
+                    <i class="fas fa-clipboard"></i> Copy Sequence
+                </button>
+                <button class="btn btn-info btn-lg" id="protparamBtn">
+                    <i class="fas fa-chart-line"></i> Analyze with ProtParam
+                </button>
+                <button class="btn btn-warning btn-lg" id="predict3DBtn">
+                    <i class="fas fa-cube"></i> Predict 3D Structure
+                </button>
+            </div>
+        </div>
+
+        <!-- 3D Structure Viewer -->
+        <div class="construct-result" id="structure3DResult" style="display: none;">
+            <h3><i class="fas fa-cube"></i> 3D Structure Prediction</h3>
+            
+            <div class="structure-viewer-container">
+                <div id="viewer3d" style="height: 500px; width: 100%; position: relative; background: #1a0028;"></div>
+            </div>
+            
+            <div class="action-buttons mt-3">
+                <a href="/download_pdb" class="btn btn-success btn-lg">
+                    <i class="fas fa-file-download"></i> Download PDB
+                </a>
+                <button class="btn btn-primary btn-lg" id="runProDyNMABtn">
+                    <i class="fas fa-wave-square"></i> Run ProDy CG-NMA Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- ProtParam Results -->
+        <div class="construct-result" id="protparamResult" style="display: none;">
+            <h3><i class="fas fa-chart-bar"></i> ProtParam Analysis</h3>
+            
+            <div class="protparam-section">
+                <h5><i class="fas fa-info-circle"></i> Basic Properties</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-weight"></i>
+                            <div>
+                                <h6>Molecular Weight</h6>
+                                <p id="param_mw">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <div>
+                                <h6>Sequence Length</h6>
+                                <p id="param_length">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-balance-scale"></i>
+                            <div>
+                                <h6>Isoelectric Point (pI)</h6>
+                                <p id="param_pi">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="protparam-section">
+                <h5><i class="fas fa-flask"></i> Physicochemical Properties</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="param-card">
+                            <i class="fas fa-atom"></i>
+                            <div>
+                                <h6>Aromaticity</h6>
+                                <p id="param_arom">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="param-card">
+                            <i class="fas fa-water"></i>
+                            <div>
+                                <h6>GRAVY</h6>
+                                <p id="param_gravy">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="param-card">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <h6>Instability Index</h6>
+                                <p id="param_instab">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="param-card">
+                            <i class="fas fa-heartbeat"></i>
+                            <div>
+                                <h6>Stability</h6>
+                                <p id="param_stability">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="protparam-section">
+                <h5><i class="fas fa-dna"></i> Secondary Structure</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-wave-square"></i>
+                            <div>
+                                <h6>Helix Fraction</h6>
+                                <p id="param_helix">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-redo"></i>
+                            <div>
+                                <h6>Turn Fraction</h6>
+                                <p id="param_turn">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="param-card">
+                            <i class="fas fa-grip-lines"></i>
+                            <div>
+                                <h6>Sheet Fraction</h6>
+                                <p id="param_sheet">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="protparam-section">
+                <h5><i class="fas fa-lightbulb"></i> Extinction Coefficients</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="param-card">
+                            <i class="fas fa-minus-circle"></i>
+                            <div>
+                                <h6>Reduced Cysteines</h6>
+                                <p id="param_ext_red">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="param-card">
+                            <i class="fas fa-link"></i>
+                            <div>
+                                <h6>Disulfide Bridges</h6>
+                                <p id="param_ext_ox">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="protparam-section">
+                <h5><i class="fas fa-chart-pie"></i> Amino Acid Composition</h5>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover" id="aaCompositionTable">
+                        <thead>
+                            <tr>
+                                <th>Amino Acid</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aaCompositionBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Success Toast -->
+    <div class="toast-notification" id="copyToast">
+        <i class="fas fa-check-circle"></i> Sequence copied to clipboard!
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container text-center">
+            <p><i class="fas fa-copyright"></i> 2025 Automated Multi Epitope Vaccine Builder</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/construct.js') }}"></script>
+</body>
+</html>

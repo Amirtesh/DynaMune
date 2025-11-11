@@ -1,0 +1,12 @@
+ANM vs PCA Mode Overlap Analysis
+============================================================
+
+Number of modes compared: 3
+Average overlap: 0.4593
+Maximum overlap: 0.9568
+Cumulative overlap: 1.0000
+
+Mode	ANM_Eigenvalue	PCA_Eigenvalue	Max_Overlap_with_PC
+1	0.029115	561.735271	0.9567
+2	0.071344	334.322702	0.9568
+3	0.093827	231.556320	0.9416

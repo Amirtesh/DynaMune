@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Multi Epitope Vaccine Builder</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Banner -->
+    <div class="app-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-syringe header-icon"></i>
+                    <div>
+                        <h1 class="app-title mb-0">Automated Multi Epitope Vaccine Builder</h1>
+                        <p class="app-subtitle mb-0">Advanced Immunoinformatics Pipeline</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        <!-- Workflow Selection -->
+        <div class="workflow-selection fade-in">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="workflow-card" onclick="showPredictionWorkflow()">
+                        <i class="fas fa-brain workflow-icon"></i>
+                        <h4>Start from Prediction</h4>
+                        <p>Begin with protein sequence prediction using NetBCE, MHC-I, and MHC-II tools</p>
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Prediction
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="workflow-card" onclick="showEpitopeWorkflow()">
+                        <i class="fas fa-list workflow-icon"></i>
+                        <h4>Start from Predicted Epitopes</h4>
+                        <p>Already have epitopes? Enter them directly and construct your vaccine</p>
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-forward"></i> Enter Epitopes
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="workflow-card" onclick="window.location.href='/standalone_nma'">
+                        <i class="fas fa-wave-square workflow-icon"></i>
+                        <h4>Coarse Grained Normal Mode Analysis</h4>
+                        <p>Upload your own PDB file to perform dynamics and flexibility analysis</p>
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Perform CG-NMA
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="workflow-card" onclick="window.location.href='/deformability'">
+                        <i class="fas fa-project-diagram workflow-icon"></i>
+                        <h4>Deformability Analysis</h4>
+                        <p>Checks if a vaccine's natural, intrinsic motions are 'pre-configured' to match the shape-change it undergoes when binding its target (like MHC-I)</p>
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-sitemap"></i> Analyze Deformability
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prediction Form (Hidden by default) -->
+        <div class="form-card slide-up" id="predictionFormCard" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-brain"></i> Prediction Workflow</h3>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="resetWorkflow()">
+                    <i class="fas fa-arrow-left"></i> Back to Selection
+                </button>
+            </div>
+            <form id="predictionForm">
+                <!-- FASTA Sequence Input -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-dna"></i> Protein Sequence (FASTA Format)
+                        <span class="required">*</span>
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="fasta_sequence" 
+                        name="fasta_sequence" 
+                        rows="8" 
+                        required></textarea>
+                    <small class="form-text">Enter a single protein sequence in FASTA format</small>
+                </div>
+
+                <!-- MHC-I Alleles -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-list"></i> MHC Class I Alleles
+                        <span class="required">*</span>
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="mhc1_alleles" 
+                        name="mhc1_alleles" 
+                        rows="4" 
+                        required></textarea>
+                    <small class="form-text">Enter one allele per line (e.g., HLA-A*02:01)</small>
+                </div>
+
+                <!-- MHC-II Alleles -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-list-alt"></i> MHC Class II Alleles
+                        <span class="required">*</span>
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="mhc2_alleles" 
+                        name="mhc2_alleles" 
+                        rows="4" 
+                        required></textarea>
+                    <small class="form-text">Enter one allele per line (e.g., HLA-DRB1*01:01)</small>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-construct" id="constructBtn">
+                        <i class="fas fa-rocket"></i> Run Epitope Prediction
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Epitope Input Form (Hidden by default) -->
+        <div class="form-card slide-up" id="epitopeFormCard" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-list"></i> Direct Epitope Input</h3>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="resetWorkflow()">
+                    <i class="fas fa-arrow-left"></i> Back to Selection
+                </button>
+            </div>
+            <form id="epitopeForm">
+                <!-- B-Cell Epitopes -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-microscope"></i> B-Cell Epitopes
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="bcell_epitopes" 
+                        name="bcell_epitopes" 
+                        rows="5"></textarea>
+                    <small class="form-text">Enter one epitope per line</small>
+                </div>
+
+                <!-- MHC-I Epitopes -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-shield-virus"></i> MHC Class I Epitopes
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="mhc1_epitopes" 
+                        name="mhc1_epitopes" 
+                        rows="5"></textarea>
+                    <small class="form-text">Enter one epitope per line</small>
+                </div>
+
+                <!-- MHC-II Epitopes -->
+                <div class="input-section">
+                    <label class="form-label">
+                        <i class="fas fa-viruses"></i> MHC Class II Epitopes
+                    </label>
+                    <textarea 
+                        class="form-control custom-textarea" 
+                        id="mhc2_epitopes" 
+                        name="mhc2_epitopes" 
+                        rows="5"></textarea>
+                    <small class="form-text">Enter one epitope per line</small>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="fas fa-arrow-right"></i> Proceed to Construct
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <i class="fas fa-dna spinner-icon"></i>
+                </div>
+                <h3 class="loading-title">Processing Your Request</h3>
+                <p class="loading-text" id="loadingText">Initializing prediction pipeline...</p>
+                <div class="progress-container">
+                    <div class="progress-bar-custom" id="progressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="row mt-5">
+            <div class="col-md-3">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-dna"></i>
+                    </div>
+                    <h4>Epitope Prediction</h4>
+                    <p>NetBCE for B-cell epitopes, NetMHCPan & NetMHCIIPan for T-cell epitopes (MHC-I & MHC-II)</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <h4>Vaccine Construction</h4>
+                    <p>Multi-epitope vaccine design with custom adjuvants, optimized linkers, and tag sequences</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <h4>Structure Prediction</h4>
+                    <p>3D structure prediction using AlphaFold2 or ESMFold with quality assessment</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h4>Property Analysis</h4>
+                    <p>Physicochemical analysis: antigenicity, allergenicity, solubility, stability, and more</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Second Row of Info Cards -->
+        <div class="row mt-4 mb-5">
+            <div class="col-md-4">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-wave-square"></i>
+                    </div>
+                    <h4>Dynamics Analysis</h4>
+                    <p>ProDy CG-NMA for structural flexibility, stability, and conformational dynamics</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container text-center">
+            <p><i class="fas fa-copyright"></i> 2025 Automated Multi Epitope Vaccine Builder</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

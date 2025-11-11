@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProDy NMA Analysis - Vaccine Builder</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Banner -->
+    <div class="app-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-wave-square header-icon"></i>
+                    <div>
+                        <h1 class="app-title mb-0">ProDy Coarse Grained Normal Mode Analysis</h1>
+                        <p class="app-subtitle mb-0">Protein Dynamics & Flexibility Analysis</p>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-outline-light btn-sm" onclick="window.close()">
+                        <i class="fas fa-times"></i> Close Window
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        
+        <!-- Analysis Configuration -->
+        <div class="card main-card fade-in">
+            <h3><i class="fas fa-cogs"></i> ProDy CG-NMA Configuration</h3>
+            <p class="text-muted">Configure Coarse Grained Normal Mode Analysis parameters for protein dynamics prediction</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="form-group mb-4">
+                        <label for="nmaMethod" class="form-label">
+                            <i class="fas fa-project-diagram"></i> NMA Method
+                        </label>
+                        <select class="form-select" id="nmaMethod">
+                            <option value="ANM" selected>ANM (Anisotropic Network Model)</option>
+                            <option value="GNM">GNM (Gaussian Network Model)</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            ANM recommended for directional analysis, GNM for magnitude only
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="form-group mb-4">
+                        <label for="cutoff" class="form-label">
+                            <i class="fas fa-ruler"></i> Cutoff Distance (Å)
+                        </label>
+                        <input type="number" class="form-control" id="cutoff" value="15.0" min="5.0" max="30.0" step="0.5">
+                        <small class="form-text text-muted">
+                            ANM default: 15.0, GNM default: 10.0
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <div class="form-group mb-4">
+                        <label for="nModes" class="form-label">
+                            <i class="fas fa-wave-square"></i> Number of Modes
+                        </label>
+                        <input type="number" class="form-control" id="nModes" value="20" min="1" max="100">
+                        <small class="form-text text-muted">
+                            Number of normal modes (1-100). Default: 20
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <div class="form-group mb-4">
+                        <label for="conformers" class="form-label">
+                            <i class="fas fa-cubes"></i> Conformers
+                        </label>
+                        <input type="number" class="form-control" id="conformers" value="10" min="1" max="50">
+                        <small class="form-text text-muted">
+                            Number of conformers to generate (1-50). Default: 10
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <div class="form-group mb-4">
+                        <label for="interfaceCutoff" class="form-label">
+                            <i class="fas fa-arrows-alt-h"></i> Interface Cutoff
+                        </label>
+                        <input type="number" class="form-control" id="interfaceCutoff" value="10.0" min="5.0" max="30.0" step="0.5">
+                        <small class="form-text text-muted">
+                            Default: 10.0
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-primary btn-lg" id="runAnalysisBtn">
+                    <i class="fas fa-play"></i> Run ProDy CG-NMA Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-container" id="loadingIndicator" style="display: none; margin-top: 30px;">
+            <div class="loading-spinner">
+                <div class="spinner-icon"></div>
+                <p style="margin-top: 15px;">Running ProDy Coarse Grained NMA Analysis. This can take a few minutes depending on protein size and number of modes</p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card main-card" id="resultsSection" style="display: none; margin-top: 30px;">
+            <h3><i class="fas fa-chart-line"></i> ProDy CG-NMA Results</h3>
+            
+            <!-- Comprehensive Analysis Plot -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5><i class="fas fa-chart-area"></i> Comprehensive Analysis</h5>
+                    <div class="plot-container" style="background: white; padding: 20px; border-radius: 8px;">
+                        <img id="comprehensivePlot" src="" alt="Comprehensive Analysis" style="width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mode Shapes Plot -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5><i class="fas fa-bezier-curve"></i> Mode Shapes Analysis</h5>
+                    <div class="plot-container" style="background: white; padding: 20px; border-radius: 8px;">
+                        <img id="modeShapesPlot" src="" alt="Mode Shapes" style="width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PCA Comprehensive Analysis Plot -->
+            <div class="row mt-4" id="pcaComprehensiveSection">
+                <div class="col-12">
+                    <h5><i class="fas fa-project-diagram"></i> PCA Comprehensive Analysis</h5>
+                    <div class="plot-container" style="background: white; padding: 20px; border-radius: 8px;">
+                        <img id="pcaComprehensivePlot" src="" alt="PCA Comprehensive Analysis" style="width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ANM PCA Comparison Plot -->
+            <div class="row mt-4" id="anmPcaComparisonSection">
+                <div class="col-12">
+                    <h5><i class="fas fa-balance-scale"></i> ANM-PCA Comparison</h5>
+                    <div class="plot-container" style="background: white; padding: 20px; border-radius: 8px;">
+                        <img id="anmPcaComparisonPlot" src="" alt="ANM PCA Comparison" style="width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ClustENMD Analysis Plot -->
+            <div class="row mt-4" id="clustenmdSection">
+                <div class="col-12">
+                    <h5><i class="fas fa-network-wired"></i> ClustENMD Analysis</h5>
+                    <div class="plot-container" style="background: white; padding: 20px; border-radius: 8px;">
+                        <img id="clustenmdPlot" src="" alt="ClustENMD Analysis" style="width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Download Buttons -->
+            <div class="action-buttons mt-4">
+                <a href="/download_nma/comprehensive_analysis.png" class="btn btn-success btn-lg" download>
+                    <i class="fas fa-download"></i> Download Comprehensive Analysis
+                </a>
+                <a href="/download_nma/mode_shapes_combined.png" class="btn btn-info btn-lg" download>
+                    <i class="fas fa-download"></i> Download Mode Shapes
+                </a>
+                <a href="/download_nma/pca_comprehensive_analysis.png" class="btn btn-success btn-lg" download>
+                    <i class="fas fa-download"></i> Download PCA Comprehensive
+                </a>
+                <a href="/download_nma/anm_pca_comparison.png" class="btn btn-info btn-lg" download>
+                    <i class="fas fa-download"></i> Download ANM-PCA Comparison
+                </a>
+                <a href="/download_nma/clustenmd_analysis.png" class="btn btn-warning btn-lg" download>
+                    <i class="fas fa-download"></i> Download ClustENMD
+                </a>
+                <a href="/download_nma_zip" class="btn btn-primary btn-lg">
+                    <i class="fas fa-download"></i> Download Complete ZIP
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-syringe"></i> Automated Multi Epitope Vaccine Builder
+            </p>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ProDy NMA JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // Update cutoff default when method changes
+            $('#nmaMethod').on('change', function() {
+                const method = $(this).val();
+                const cutoffInput = $('#cutoff');
+                if (method === 'ANM') {
+                    cutoffInput.val('15.0');
+                } else if (method === 'GNM') {
+                    cutoffInput.val('10.0');
+                }
+            });
+            
+            $('#runAnalysisBtn').on('click', function() {
+                runProDyNMA();
+            });
+        });
+        
+        function runProDyNMA() {
+            const method = $('#nmaMethod').val();
+            const cutoff = parseFloat($('#cutoff').val());
+            const nModes = parseInt($('#nModes').val());
+            const conformers = parseInt($('#conformers').val());
+            const interfaceCutoff = parseFloat($('#interfaceCutoff').val());
+            
+            // Validate inputs
+            if (cutoff < 5.0 || cutoff > 30.0) {
+                alert('Cutoff distance must be between 5.0 and 30.0 Å');
+                return;
+            }
+            
+            if (interfaceCutoff < 5.0 || interfaceCutoff > 30.0) {
+                alert('Interface cutoff distance must be between 5.0 and 30.0 Å');
+                return;
+            }
+            
+            if (nModes < 1 || nModes > 100) {
+                alert('Number of modes must be between 1 and 100');
+                return;
+            }
+            
+            if (conformers < 1 || conformers > 50) {
+                alert('Number of conformers must be between 1 and 50');
+                return;
+            }
+            
+            // Show loading
+            $('#loadingIndicator').fadeIn();
+            $('#resultsSection').hide();
+            $('#runAnalysisBtn').prop('disabled', true);
+            
+            // Run analysis
+            $.ajax({
+                url: '/run_prody_nma',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    method: method,
+                    cutoff: cutoff,
+                    n_modes: nModes,
+                    conformers: conformers,
+                    interface_cutoff: interfaceCutoff
+                }),
+                success: function(response) {
+                    $('#loadingIndicator').fadeOut();
+                    
+                    console.log('NMA Response:', response);
+                    
+                    if (response.success) {
+                        // Display results
+                        $('#resultsSection').fadeIn();
+                        
+                        // Display all plots with timestamp to force reload
+                        const timestamp = new Date().getTime();
+                        $('#comprehensivePlot').attr('src', '/download_nma/comprehensive_analysis.png?' + timestamp);
+                        $('#modeShapesPlot').attr('src', '/download_nma/mode_shapes_combined.png?' + timestamp);
+                        $('#pcaComprehensivePlot').attr('src', '/download_nma/pca_comprehensive_analysis.png?' + timestamp);
+                        $('#anmPcaComparisonPlot').attr('src', '/download_nma/anm_pca_comparison.png?' + timestamp);
+                        $('#clustenmdPlot').attr('src', '/download_nma/clustenmd_analysis.png?' + timestamp);
+                        
+                        // Scroll to results
+                        $('html, body').animate({
+                            scrollTop: $('#resultsSection').offset().top - 100
+                        }, 500);
+                    } else {
+                        console.error('NMA Error:', response.error);
+                        console.log('Output:', response.output);
+                        console.log('Error output:', response.error_output);
+                        console.log('Debug info:', response.debug);
+                        alert('Error: ' + response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#loadingIndicator').fadeOut();
+                    alert('ProDy NMA analysis failed: ' + error);
+                },
+                complete: function() {
+                    $('#runAnalysisBtn').prop('disabled', false);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

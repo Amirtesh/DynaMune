@@ -1,0 +1,11 @@
+Subject,ML Score,MERCI Score Pos,MERCI Score Neg,Hybrid Score,Prediction,PPV
+Seq_1,0.14,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_2,0.27,0.0,0.0,0.27,Non-Toxin,0.196
+Seq_3,0.17,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_4,0.305,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_5,0.08,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_6,0.17,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_7,0.17,0.0,0.0,0.17,Non-Toxin,0.066
+Seq_8,0.17,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_9,0.35,0.0,-0.5,0.0,Non-Toxin,0.0
+Seq_10,0.355,0.0,0.0,0.355,Non-Toxin,0.307

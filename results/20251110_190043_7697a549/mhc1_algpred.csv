@@ -1,0 +1,11 @@
+Subject,ML Score,MERCI Score,BLAST Score,Hybrid Score,Prediction
+Seq_1,0.296,0,0,0.296,Non-Allergen
+Seq_2,0.365,0,0,0.365,Allergen
+Seq_3,0.38,0,0,0.38,Allergen
+Seq_4,0.316,0,0,0.316,Allergen
+Seq_5,0.301,0,0,0.301,Allergen
+Seq_6,0.365,0,0,0.365,Allergen
+Seq_7,0.365,0,0,0.365,Allergen
+Seq_8,0.427,0,0,0.427,Allergen
+Seq_9,0.391,0,0,0.391,Allergen
+Seq_10,0.321,0,0,0.321,Allergen

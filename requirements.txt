@@ -1,0 +1,7 @@
+Flask==2.3.2
+pandas==2.0.3
+Werkzeug==2.3.6
+biopython==1.81
+requests
+numpy
+matplotlib
