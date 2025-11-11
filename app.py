@@ -1486,30 +1486,51 @@ def run_deformability_analysis():
         print(f"STDERR: {result.stderr}")
         
         if result.returncode != 0:
+            # Try to get available chains from the PDB files
+            try:
+                from prody import parsePDB
+                ref_struct = parsePDB(str(ref_path))
+                target_struct = parsePDB(str(target_path))
+                
+                ref_chains = set([chain.getChid() for chain in ref_struct.iterChains()])
+                target_chains = set([chain.getChid() for chain in target_struct.iterChains()])
+                
+                chain_info = f"\nAvailable chains:\n  Reference ({ref_path.name}): {sorted(ref_chains)}\n  Target ({target_path.name}): {sorted(target_chains)}"
+                error_msg = f'Deformability analysis failed. {chain_info}\n\nYou specified: ref_chain={ref_chain}, target_chain={target_chain}\n\nError output:\n{result.stderr}'
+            except:
+                chain_info = ""
+                error_msg = f'Deformability analysis failed.\n\nError output:\n{result.stderr}'
+            
             return jsonify({
                 'success': False,
-                'error': 'Deformability analysis failed',
+                'error': error_msg,
                 'output': result.stdout,
                 'error_output': result.stderr,
                 'command': ' '.join(cmd)
             })
         
         # The script creates output in {reference_basename}_Deformation_Analysis/
-        # Look for any directory ending in _Deformation_Analysis
-        output_dir = None
-        for item in session_dir.iterdir():
-            if item.is_dir() and item.name.endswith('_Deformation_Analysis'):
-                output_dir = item
-                break
+        # Since we save as 'reference.pdb', the output should be 'reference_Deformation_Analysis'
+        output_dir = session_dir / 'reference_Deformation_Analysis'
         
         # Debug: check what exists
-        print(f"Session dir contents: {[f.name for f in session_dir.iterdir()]}")
-        print(f"Found output directory: {output_dir}")
+        print(f"\n=== DEFORMABILITY DEBUG ===")
+        print(f"Session dir: {session_dir}")
+        print(f"Session dir exists: {session_dir.exists()}")
+        print(f"Expected output dir: {output_dir}")
+        print(f"Output dir exists: {output_dir.exists()}")
         
-        if output_dir and output_dir.exists():
-            # Find all PNG files in the output directory
+        if session_dir.exists():
+            print(f"Session dir contents: {list(session_dir.iterdir())}")
+            # Also check for any _Deformation_Analysis directories
+            deform_dirs = [d for d in session_dir.iterdir() if d.is_dir() and '_Deformation_Analysis' in d.name]
+            print(f"Directories with '_Deformation_Analysis': {deform_dirs}")
+        
+        if output_dir.exists():
             plot_files = list(output_dir.glob('*.png'))
-            print(f"Plot files found: {[f.name for f in plot_files]}")
+            print(f"Plot files found: {plot_files}")
+            print(f"Plot file names: {[f.name for f in plot_files]}")
+            print(f"=== END DEBUG ===\n")
             
             # Store the output directory name for downloads
             session['deformability_dir'] = output_dir.name
