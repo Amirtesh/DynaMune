@@ -88,9 +88,29 @@ Choose from **7 construct patterns** (sequential and alternating):
   * Support for custom PDB structure uploads
   * Adjustable number of modes (1-100, default: 20)
   * Configurable number of conformers (1-50, default: 10)
+  * Configurable interface cutoff (5.0-30.0 Å, default: 10.0)
+  * **Advanced Analysis Features** (always enabled):
+    * **Ensemble PCA**: Principal Component Analysis for ensemble dynamics
+    * **Allosteric Analysis**: Identify allosteric communication pathways
+    * **ClustENMD**: Cluster-based Elastic Network Model analysis
   * Comprehensive analysis including MSF, B-factors, eigenvalues, cross-correlation, covariance, and collectivity
+  * PCA comprehensive analysis with ANM-PCA comparison plots
   * Mode shape visualization and conformer generation
   * Downloadable results (PNG plots and complete ZIP package)
+
+### 8) Deformability Analysis
+
+* **Conformational Change Analysis**: Compare intrinsic dynamics of unbound vs. bound protein structures
+* **ProDy-based Analysis**: Calculate overlap between NMA modes and observed conformational changes
+* **Dual Structure Upload**: Upload reference (unbound) and target (bound complex) PDB structures
+* **Chain-specific Analysis**: Specify chain IDs for precise protein comparison
+* **Deformation Vector Calculation**: Measure conformational changes upon binding
+* **Mode Overlap Quantification**: Determine which normal modes contribute to conformational changes
+* **Comprehensive Visualization**: 
+  * Individual mode contributions (squared overlap)
+  * Cumulative overlap analysis
+  * 80% threshold identification for key modes
+* **Downloadable Results**: PNG plots and detailed numerical results
 
 ---
 
@@ -103,13 +123,15 @@ VaccineBuilder/
 ├── mhc2.py                     # MHC-II predictions (IEDB API wrapper)
 ├── model.py                    # ESMFold 3D structure prediction
 ├── prody_nma.py                # ProDy Coarse Grained Normal Mode Analysis
+├── deformation_analysis.py     # ProDy Deformability Analysis
 ├── requirements.txt            # Python dependencies
 ├── templates/                  # Jinja2 HTML templates
 │   ├── index.html
 │   ├── results.html
 │   ├── construct.html
 │   ├── prody_nma.html
-│   └── standalone_nma.html
+│   ├── standalone_nma.html
+│   └── deformability.html
 ├── static/                     # CSS/JS assets
 │   ├── css/
 │   │   └── style.css
@@ -125,7 +147,8 @@ VaccineBuilder/
 └── results/                    # Generated outputs (session-based folders)
     └── {YYYYMMDD_HHMMSS_xxxxxxxx}/
         ├── predicted_structure.pdb
-        └── *_NMA_results/       # ProDy CG-NMA analysis outputs
+        ├── *_NMA_PCA_results/       # ProDy CG-NMA analysis outputs (with PCA)
+        └── *_Deformation_Analysis/  # Deformability analysis outputs
 ```
 
 ---
@@ -171,15 +194,33 @@ VaccineBuilder/
 
 1. **Upload Custom PDB**: Navigate to the "Coarse Grained Normal Mode Analysis" workflow from the homepage.
 2. **Upload Structure**: Upload your own PDB file (single or multi-chain complexes supported).
-3. **Configure Analysis**: Choose ANM or GNM method, set number of modes (1-100), and conformers (1-50).
-4. **Run Analysis**: Generate comprehensive flexibility analysis including MSF, B-factors, eigenvalues, cross-correlation, covariance, and mode shapes.
-5. **Download Results**: Export individual plots or complete ZIP package with all analysis outputs.
+3. **Configure Analysis**: 
+   * Choose ANM or GNM method
+   * Set number of modes (1-100, default: 20)
+   * Set number of conformers (1-50, default: 10)
+   * Adjust interface cutoff (5.0-30.0 Å, default: 10.0)
+   * PCA, Allosteric, and ClustENMD analyses are automatically enabled
+4. **Run Analysis**: Generate comprehensive flexibility analysis including:
+   * MSF, B-factors, eigenvalues, cross-correlation, covariance, and mode shapes
+   * PCA comprehensive analysis with ANM-PCA comparison
+   * ClustENMD cluster-based analysis
+5. **Download Results**: Export individual plots (Comprehensive Analysis, Mode Shapes, PCA Comprehensive, ANM-PCA Comparison, ClustENMD) or complete ZIP package.
 
-**Construct format example**
+### Deformability Analysis Workflow
 
-```
-[ADJUVANT]-EAAAK-[B1]-AAY-[B2]-AAY-[B3]-GPGPG-[MHC1_1]-AAY-[MHC1_2]-KK-[MHC2_1]-GPGPG-[MHC2_2]
-```
+1. **Access Workflow**: Navigate to "Deformability Analysis" from the homepage.
+2. **Upload Structures**: 
+   * Reference PDB: Unbound vaccine structure (standalone protein)
+   * Target PDB: Vaccine in complex (bound state, e.g., with MHC)
+3. **Specify Chains**: Enter single-letter chain IDs for both structures.
+4. **Configure Parameters**: Set number of NMA modes (1-100, default: 20).
+5. **Run Analysis**: System performs:
+   * Structure matching and alignment
+   * ANM calculation on reference structure
+   * Deformation vector calculation
+   * Mode overlap quantification
+6. **View Results**: Interactive plot showing individual and cumulative mode contributions.
+7. **Download**: Export deformation overlap plot and numerical results.
 
 ---
 
@@ -192,12 +233,18 @@ VaccineBuilder/
 * `mhc2_prediction.csv` — MHC-II binding predictions
 * `vaccine_construct.fasta` — Final vaccine construct
 * `predicted_structure.pdb` — 3D structure prediction (ESMFold)
-* `*_NMA_results/` — ProDy CG-NMA outputs
+* `*_NMA_PCA_results/` — ProDy CG-NMA outputs with PCA
   * `comprehensive_analysis.png` — Multi-panel analysis (MSF, B-factors, eigenvalues, cross-correlation, covariance, collectivity)
   * `mode_shapes_combined.png` — Grid of first 6-12 mode shapes
+  * `pca_comprehensive_analysis.png` — PCA analysis with variance and PC projections
+  * `anm_pca_comparison.png` — Comparison between ANM and PCA modes
+  * `clustenmd_analysis.png` — Cluster-based Elastic Network Model analysis
   * `individual_mode_*.png` — Individual mode shape plots
   * `conformers.pdb` — Generated conformers
   * Text files with detailed analysis data
+* `*_Deformation_Analysis/` — Deformability analysis outputs
+  * `deformation_overlap.png` — Mode contribution and cumulative overlap plot
+  * `deformation_results.txt` — Numerical overlap data for each mode
 
 **Formats**
 
@@ -266,6 +313,7 @@ VaccineBuilder/
 * *IEDB timeout*: verify internet connectivity; service downtime happens.
 * *3D structure prediction slow*: ESMFold API can take 1-3 minutes depending on sequence length and server load.
 * *ProDy CG-NMA timeout*: Large proteins or high mode counts may take longer; reduce number of modes or conformers for faster analysis.
+* *Deformability analysis chain matching*: Ensure correct chain IDs are specified; chains must have sufficient sequence similarity (>25%) and overlap (>70%) for successful matching.
 * *3D viewer lag*: Disable surface rendering (already optimized); ensure modern browser with WebGL support.
 
 ---
