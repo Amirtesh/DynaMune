@@ -1610,53 +1610,6 @@ table#bcellTable, table#mhc1Table, table#mhc2Table {
 }
 
 /* ========================================
-   PYCAPSID ANALYSIS STYLES
-   ======================================== */
-
-.plot-container {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: var(--shadow-md);
-}
-
-.plot-container img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-}
-
-#consoleOutput {
-    background: var(--primary-dark);
-    color: var(--accent-cyan);
-    padding: 15px;
-    border-radius: 8px;
-    max-height: 300px;
-    overflow-y: auto;
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
-    border: 1px solid var(--accent-cyan);
-}
-
-#consoleOutput::-webkit-scrollbar {
-    width: 8px;
-}
-
-#consoleOutput::-webkit-scrollbar-track {
-    background: var(--secondary-dark);
-    border-radius: 4px;
-}
-
-#consoleOutput::-webkit-scrollbar-thumb {
-    background: var(--accent-cyan);
-    border-radius: 4px;
-}
-
-#consoleOutput::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-violet);
-}
-
-/* ========================================
    BUTTON STYLES FOR NEW FEATURES
    ======================================== */
 
