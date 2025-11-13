@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import uuid
 import zipfile
+import io
 from datetime import datetime
 import json
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
@@ -1369,6 +1370,255 @@ def download_standalone_nma_zip():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/anm_comparison')
+def anm_comparison_page():
+    """Render ANM comparison analysis page"""
+    # Force create a new session for each visit
+    session.pop('session_id', None)
+    session.pop('anm_comparison_dir', None)
+    get_session_dir()
+    return render_template('anm_comparison.html')
+
+
+@app.route('/upload_anm_comparison_pdbs', methods=['POST'])
+def upload_anm_comparison_pdbs():
+    """Upload apo and complex PDB files for ANM comparison"""
+    try:
+        if 'apo_pdb' not in request.files or 'complex_pdb' not in request.files:
+            return jsonify({'success': False, 'error': 'Both apo and complex PDB files are required'})
+        
+        apo_file = request.files['apo_pdb']
+        complex_file = request.files['complex_pdb']
+        
+        if apo_file.filename == '' or complex_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select both files'})
+        
+        if not apo_file.filename.endswith('.pdb') or not complex_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload PDB files'})
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB files
+        apo_path = session_dir / 'apo.pdb'
+        complex_path = session_dir / 'complex.pdb'
+        apo_file.save(str(apo_path))
+        complex_file.save(str(complex_path))
+        
+        return jsonify({
+            'success': True,
+            'apo_filename': apo_file.filename,
+            'complex_filename': complex_file.filename,
+            'apo_path': str(apo_path),
+            'complex_path': str(complex_path)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/run_anm_comparison', methods=['POST'])
+def run_anm_comparison():
+    """Run ANM comparison analysis between apo and complex structures"""
+    try:
+        data = request.get_json()
+        apo_path = data.get('apo_path', '')
+        complex_path = data.get('complex_path', '')
+        apo_chain = data.get('apo_chain', 'A')
+        complex_chain = data.get('complex_chain', 'B')
+        n_modes = data.get('n_modes', 20)
+        
+        # Validate inputs
+        if not apo_path or not Path(apo_path).exists():
+            return jsonify({'success': False, 'error': 'Apo PDB file not found'})
+        
+        if not complex_path or not Path(complex_path).exists():
+            return jsonify({'success': False, 'error': 'Complex PDB file not found'})
+        
+        # Validate chain IDs
+        if not apo_chain or len(apo_chain) != 1:
+            return jsonify({'success': False, 'error': 'Apo chain ID must be a single character'})
+        
+        if not complex_chain or len(complex_chain) != 1:
+            return jsonify({'success': False, 'error': 'Complex chain ID must be a single character'})
+        
+        # Validate n_modes
+        try:
+            n_modes = int(n_modes)
+            if n_modes < 1 or n_modes > 100:
+                return jsonify({'success': False, 'error': 'Number of modes must be between 1 and 100'})
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid number of modes'})
+        
+        # Get session directory
+        session_dir = Path(apo_path).parent
+        
+        # Output directory
+        output_dir = session_dir / 'anm_comparison'
+        
+        # Check if anm_comparison.py exists
+        anm_script = BASE_DIR / 'anm_comparison.py'
+        if not anm_script.exists():
+            return jsonify({
+                'success': False,
+                'error': f'ANM comparison script not found at {anm_script}'
+            })
+        
+        # Build command
+        cmd = ['python3', str(anm_script),
+               '--apo', str(apo_path),
+               '--complex', str(complex_path),
+               '--c_apo', apo_chain,
+               '--c_complex', complex_chain,
+               '--modes', str(n_modes),
+               '--outdir', str(output_dir)]
+        
+        # Debug: log the command
+        print(f"Running ANM comparison command: {' '.join(cmd)}")
+        print(f"Working directory: {session_dir}")
+        
+        # Run ANM comparison analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=600  # 10 minute timeout
+        )
+        
+        # Debug: log output
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            # Try to get available chains from the PDB files
+            try:
+                from prody import parsePDB
+                apo_struct = parsePDB(str(apo_path))
+                complex_struct = parsePDB(str(complex_path))
+                
+                apo_chains = set([chain.getChid() for chain in apo_struct.iterChains()])
+                complex_chains = set([chain.getChid() for chain in complex_struct.iterChains()])
+                
+                chain_info = f"\nAvailable chains:\n  Apo ({Path(apo_path).name}): {sorted(apo_chains)}\n  Complex ({Path(complex_path).name}): {sorted(complex_chains)}"
+                error_msg = f'ANM comparison analysis failed. {chain_info}\n\nYou specified: apo_chain={apo_chain}, complex_chain={complex_chain}\n\nError output:\n{result.stderr}'
+            except:
+                chain_info = ""
+                error_msg = f'ANM comparison analysis failed.\n\nError output:\n{result.stderr}'
+            
+            return jsonify({
+                'success': False,
+                'error': error_msg,
+                'output': result.stdout,
+                'error_output': result.stderr,
+                'command': ' '.join(cmd)
+            })
+        
+        # Check if output directory exists
+        print(f"\n=== ANM COMPARISON DEBUG ===")
+        print(f"Session dir: {session_dir}")
+        print(f"Output dir: {output_dir}")
+        print(f"Output dir exists: {output_dir.exists()}")
+        
+        if output_dir.exists():
+            plot_files = list(output_dir.glob('*.png'))
+            print(f"Plot files found: {plot_files}")
+            print(f"Plot file names: {[f.name for f in plot_files]}")
+            print(f"=== END DEBUG ===\n")
+            
+            # Store the output directory name for downloads
+            session['anm_comparison_dir'] = output_dir.name
+            
+            return jsonify({
+                'success': True,
+                'message': 'ANM comparison analysis completed successfully',
+                'output': result.stdout,
+                'plot_count': len(plot_files),
+                'plots': [f.name for f in plot_files]
+            })
+        else:
+            # List what's actually in session_dir
+            session_contents = list(session_dir.iterdir()) if session_dir.exists() else []
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found',
+                'output': result.stdout,
+                'session_dir': str(session_dir),
+                'session_contents': [str(f) for f in session_contents]
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing the number of modes.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download_anm_comparison/<filename>')
+def download_anm_comparison(filename):
+    """Download a specific ANM comparison plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('anm_comparison_dir', 'anm_comparison')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_anm_comparison_zip')
+def download_anm_comparison_zip():
+    """Download all ANM comparison results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('anm_comparison_dir', 'anm_comparison')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='anm_comparison_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
 
 
 @app.route('/deformability')
