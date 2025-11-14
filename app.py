@@ -1621,6 +1621,533 @@ def download_anm_comparison_zip():
         return str(e), 500
 
 
+# ============================================================================
+# POCKET DYNAMICS ANALYSIS ROUTES
+# ============================================================================
+
+@app.route('/pocket_dynamics')
+def pocket_dynamics_page():
+    """Render pocket dynamics analysis page"""
+    session.pop('pocket_dynamics_dir', None)
+    get_session_dir()
+    return render_template('pocket_dynamics.html')
+
+
+@app.route('/run_pocket_dynamics', methods=['POST'])
+def run_pocket_dynamics():
+    """Run pocket dynamics analysis"""
+    try:
+        if 'pdb_file' not in request.files:
+            return jsonify({'success': False, 'error': 'PDB file is required'})
+        
+        pdb_file = request.files['pdb_file']
+        if pdb_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select a PDB file'})
+        
+        if not pdb_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload a PDB file'})
+        
+        # Get parameters
+        n_modes = int(request.form.get('n_modes', 20))
+        n_conformers = int(request.form.get('n_conformers', 20))
+        rmsd_amplitude = float(request.form.get('rmsd_amplitude', 1.0))
+        pocket_threshold = float(request.form.get('pocket_threshold', 10.0))
+        residue_range = request.form.get('residue_range', '').strip()
+        pocket_residues = request.form.get('pocket_residues', '').strip()
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB file
+        pdb_path = session_dir / 'structure.pdb'
+        pdb_file.save(str(pdb_path))
+        
+        # Check if pocket_dynamics.py exists
+        script_path = BASE_DIR / 'pocket_dynamics.py'
+        if not script_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Pocket dynamics script not found at {script_path}'
+            })
+        
+        # Build command
+        cmd = ['python3', str(script_path),
+               '--pdb', str(pdb_path),
+               '--nmodes', str(n_modes),
+               '--conformers', str(n_conformers),
+               '--rmsd', str(rmsd_amplitude),
+               '--pocket-threshold', str(pocket_threshold)]
+        
+        if residue_range:
+            cmd.extend(['--residue-range', residue_range])
+        if pocket_residues:
+            cmd.extend(['--pocket-residues', pocket_residues])
+        
+        print(f"Running pocket dynamics command: {' '.join(cmd)}")
+        
+        # Run analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed.\n\nError output:\n{result.stderr}',
+                'output': result.stdout
+            })
+        
+        # The script creates output in {pdb_basename}_Pocket_Dynamics/
+        # Look for directory ending in _Pocket_Dynamics
+        output_dir = None
+        for item in session_dir.iterdir():
+            if item.is_dir() and item.name.endswith('_Pocket_Dynamics'):
+                output_dir = item
+                break
+        
+        if output_dir and output_dir.exists():
+            plot_files = sorted([f.name for f in output_dir.glob('*.png')])
+            session['pocket_dynamics_dir'] = output_dir.name
+            
+            return jsonify({
+                'success': True,
+                'message': 'Pocket dynamics analysis completed successfully',
+                'output': result.stdout,
+                'plots': plot_files
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found'
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing parameters.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download_pocket_dynamics/<filename>')
+def download_pocket_dynamics(filename):
+    """Download a specific pocket dynamics plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('pocket_dynamics_dir', 'structure_Pocket_Dynamics')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_pocket_dynamics_zip')
+def download_pocket_dynamics_zip():
+    """Download all pocket dynamics results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('pocket_dynamics_dir', 'structure_Pocket_Dynamics')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='pocket_dynamics_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+# ============================================================================
+# PRS ANALYSIS ROUTES
+# ============================================================================
+
+@app.route('/prs_analysis')
+def prs_analysis_page():
+    """Render PRS analysis page"""
+    session.pop('prs_analysis_dir', None)
+    get_session_dir()
+    return render_template('prs_analysis.html')
+
+
+@app.route('/run_prs_analysis', methods=['POST'])
+def run_prs_analysis():
+    """Run PRS analysis"""
+    try:
+        if 'pdb_file' not in request.files:
+            return jsonify({'success': False, 'error': 'PDB file is required'})
+        
+        pdb_file = request.files['pdb_file']
+        if pdb_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select a PDB file'})
+        
+        if not pdb_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload a PDB file'})
+        
+        # Get parameters
+        chains = request.form.get('chains', '').strip()
+        residue_range = request.form.get('residue_range', '').strip()
+        n_modes = int(request.form.get('n_modes', 20))
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB file
+        pdb_path = session_dir / 'structure.pdb'
+        pdb_file.save(str(pdb_path))
+        
+        # Check if prs_analysis.py exists
+        script_path = BASE_DIR / 'prs_analysis.py'
+        if not script_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'PRS analysis script not found at {script_path}'
+            })
+        
+        # Build command
+        cmd = ['python3', str(script_path),
+               '--pdb', str(pdb_path),
+               '--nmodes', str(n_modes)]
+        
+        if chains:
+            cmd.extend(['--chain', chains])
+        if residue_range:
+            cmd.extend(['--residue-range', residue_range])
+        
+        print(f"Running PRS command: {' '.join(cmd)}")
+        
+        # Run analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed.\n\nError output:\n{result.stderr}',
+                'output': result.stdout
+            })
+        
+        # The script creates output in {pdb_basename}_PRS_Analysis/
+        # Look for directory ending in _PRS_Analysis
+        output_dir = None
+        for item in session_dir.iterdir():
+            if item.is_dir() and item.name.endswith('_PRS_Analysis'):
+                output_dir = item
+                break
+        
+        if output_dir and output_dir.exists():
+            plot_files = sorted([f.name for f in output_dir.glob('*.png')])
+            session['prs_analysis_dir'] = output_dir.name
+            
+            return jsonify({
+                'success': True,
+                'message': 'PRS analysis completed successfully',
+                'output': result.stdout,
+                'plots': plot_files
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found'
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing parameters.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download_prs_analysis/<filename>')
+def download_prs_analysis(filename):
+    """Download a specific PRS analysis plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('prs_analysis_dir', 'structure_PRS_Analysis')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_prs_analysis_zip')
+def download_prs_analysis_zip():
+    """Download all PRS analysis results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('prs_analysis_dir', 'structure_PRS_Analysis')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='prs_analysis_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+# ============================================================================
+# DOMAIN-HINGE ANALYSIS ROUTES
+# ============================================================================
+
+@app.route('/domain_hinge')
+def domain_hinge_page():
+    """Render domain-hinge analysis page"""
+    session.pop('domain_hinge_dir', None)
+    get_session_dir()
+    return render_template('domain_hinge.html')
+
+
+@app.route('/run_domain_hinge', methods=['POST'])
+def run_domain_hinge():
+    """Run domain-hinge analysis"""
+    try:
+        if 'pdb_file' not in request.files:
+            return jsonify({'success': False, 'error': 'PDB file is required'})
+        
+        pdb_file = request.files['pdb_file']
+        if pdb_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select a PDB file'})
+        
+        if not pdb_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload a PDB file'})
+        
+        # Get parameters
+        chains = request.form.get('chains', '').strip()
+        residue_range = request.form.get('residue_range', '').strip()
+        domain_threshold = float(request.form.get('domain_threshold', 0.25))
+        n_modes = int(request.form.get('n_modes', 20))
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB file
+        pdb_path = session_dir / 'structure.pdb'
+        pdb_file.save(str(pdb_path))
+        
+        # Check if domain_hinge_analysis.py exists
+        script_path = BASE_DIR / 'domain_hinge_analysis.py'
+        if not script_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Domain-hinge analysis script not found at {script_path}'
+            })
+        
+        # Build command
+        cmd = ['python3', str(script_path),
+               '--pdb', str(pdb_path),
+               '--domain-threshold', str(domain_threshold),
+               '--nmodes', str(n_modes)]
+        
+        if chains:
+            cmd.extend(['--chain', chains])
+        if residue_range:
+            cmd.extend(['--residue-range', residue_range])
+        
+        print(f"Running domain-hinge command: {' '.join(cmd)}")
+        
+        # Run analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed.\n\nError output:\n{result.stderr}',
+                'output': result.stdout
+            })
+        
+        # The script creates output in {pdb_basename}_Domain_Hinge_Analysis/
+        # Look for directory ending in _Domain_Hinge_Analysis
+        output_dir = None
+        for item in session_dir.iterdir():
+            if item.is_dir() and item.name.endswith('_Domain_Hinge_Analysis'):
+                output_dir = item
+                break
+        
+        if output_dir and output_dir.exists():
+            plot_files = sorted([f.name for f in output_dir.glob('*.png')])
+            session['domain_hinge_dir'] = output_dir.name
+            
+            return jsonify({
+                'success': True,
+                'message': 'Domain-hinge analysis completed successfully',
+                'output': result.stdout,
+                'plots': plot_files
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found'
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing parameters.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download_domain_hinge/<filename>')
+def download_domain_hinge(filename):
+    """Download a specific domain-hinge plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('domain_hinge_dir', 'structure_Domain_Hinge_Analysis')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_domain_hinge_zip')
+def download_domain_hinge_zip():
+    """Download all domain-hinge results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('domain_hinge_dir', 'structure_Domain_Hinge_Analysis')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='domain_hinge_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
+
+
 @app.route('/deformability')
 def deformability_page():
     """Render deformability analysis page"""
