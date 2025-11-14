@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified Multi-Epitope Immunoinformatics and Structure Dynamics Platform</title>
+    <title>Protein Dynamics Platform</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,9 +23,12 @@
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-syringe header-icon"></i>
+                    <i class="fas fa-atom header-icon"></i>
                     <div>
-                        <h1 class="app-title mb-0">Unified Multi-Epitope Immunoinformatics and Structure Dynamics Platform</h1>
+                        <h1 class="app-title mb-0">
+                            <span style="font-size: 2.5rem; font-weight: 800; display: block; margin-bottom: 0.3rem;">DynaMune</span>
+                            <span style="font-size: 1.3rem; font-weight: 500;">Unified Platform for Protein Dynamics with Integrated Immunoinformatics Tools</span>
+                        </h1>
                     </div>
                 </div>
             </div>
@@ -36,27 +39,7 @@
     <div class="container main-container">
         <!-- Workflow Selection -->
         <div class="workflow-selection fade-in">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="workflow-card" onclick="showPredictionWorkflow()">
-                        <i class="fas fa-brain workflow-icon"></i>
-                        <h4>Start from Prediction</h4>
-                        <p>Begin with protein sequence prediction using NetBCE, NetMHCPan 4.1, and NetMHCIIPan 4.1</p>
-                        <button type="button" class="btn btn-primary">
-                            <i class="fas fa-play"></i> Start Prediction
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="workflow-card" onclick="showEpitopeWorkflow()">
-                        <i class="fas fa-list workflow-icon"></i>
-                        <h4>Start from Predicted Epitopes</h4>
-                        <p>Already have epitopes? Enter them directly and construct your vaccine</p>
-                        <button type="button" class="btn btn-primary">
-                            <i class="fas fa-forward"></i> Enter Epitopes
-                        </button>
-                    </div>
-                </div>
+            <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="workflow-card" onclick="window.location.href='/standalone_nma'">
                         <i class="fas fa-wave-square workflow-icon"></i>
@@ -71,14 +54,12 @@
                     <div class="workflow-card" onclick="window.location.href='/deformability'">
                         <i class="fas fa-project-diagram workflow-icon"></i>
                         <h4>Deformability Analysis</h4>
-                        <p>Checks if a protein's natural, intrinsic motions are 'pre-configured' to match the shape-change it undergoes when binding its target</p>
+                        <p>Checks if a protein's natural, intrinsic motions are pre-configured to match the shape-change it undergoes when binding its target</p>
                         <button type="button" class="btn btn-primary">
                             <i class="fas fa-sitemap"></i> Analyze Deformability
                         </button>
                     </div>
                 </div>
-            </div>
-            <div class="row mt-4">
                 <div class="col-md-3">
                     <div class="workflow-card" onclick="window.location.href='/anm_comparison'">
                         <i class="fas fa-exchange-alt workflow-icon"></i>
@@ -99,6 +80,9 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <div class="row">
                 <div class="col-md-3">
                     <div class="workflow-card" onclick="window.location.href='/prs_analysis'">
                         <i class="fas fa-bullseye workflow-icon"></i>
@@ -116,6 +100,19 @@
                         <p>Segments the protein into dynamic domains and identifies hinge residues controlling major conformational motions</p>
                         <button type="button" class="btn btn-primary">
                             <i class="fas fa-link"></i> Analyze Domains
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="workflow-card" style="cursor: default;">
+                        <i class="fas fa-dna workflow-icon"></i>
+                        <h4>Immunoinformatics Analysis of Protein Sequences</h4>
+                        <p>Start your workflow by predicting antigenic regions or uploading known epitopes to construct vaccines</p>
+                        <button type="button" class="btn btn-primary mb-2" onclick="showPredictionWorkflow()">
+                            <i class="fas fa-brain"></i> Start Prediction
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="showEpitopeWorkflow()">
+                            <i class="fas fa-list"></i> Enter Epitopes
                         </button>
                     </div>
                 </div>
@@ -264,7 +261,7 @@
     <!-- Footer -->
     <footer class="app-footer">
         <div class="container text-center">
-            <p><i class="fas fa-copyright"></i> 2025 Unified Multi-Epitope Immunoinformatics and Structure Dynamics Platform</p>
+            <p><i class="fas fa-copyright"></i> 2025 DynaMune – Unified Platform for Protein Dynamics with Integrated Immunoinformatics Tools</p>
         </div>
     </footer>
 
