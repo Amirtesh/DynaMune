@@ -1,152 +1,169 @@
-# Unified Multi-Epitope Immunoinformatics and Structural Analysis Platform
+# DynaMune
+## Unified Platform for Protein Dynamics with Integrated Immunoinformatics Tools
 
-This platform provides an integrated, end-to-end environment for multi-epitope immunoinformatics, construct assembly, structural modeling, and protein dynamics analysis. It combines epitope prediction, safety screening, construct design, 3D structure prediction, and ProDy-based Normal Mode and deformability analyses into a single workflow. The tool supports both vaccine-oriented and general protein analysis use cases.
+This platform provides an integrated, end-to-end environment for multi-epitope immunoinformatics, construct assembly, structural modeling, and advanced protein dynamics analysis. It combines epitope prediction, safety screening, construct design, 3D structure prediction, and ProDy-based Normal Mode and deformability analyses into a unified workflow. The tool supports both vaccine-oriented and general protein structural studies, including ligand-binding and allostery exploration.
+
+---
+
 
 ## Features
 
-### 1. Epitope Prediction
+### 1. Protein Structure and Dynamics Analysis (ProDy-Powered)
 
-* B-cell epitope prediction using bundled NetBCE (local execution).
-* MHC-I binding prediction using IEDB Next-Generation API (NetMHCpan 4.1 EL model).
-* MHC-II binding prediction using IEDB Next-Generation API (NetMHCIIpan 4.1 EL model).
-* Configurable allele selection for MHC-I and MHC-II.
-* Automatic parsing and export of epitope prediction tables.
+A comprehensive toolkit for exploring protein motions, flexibility, allostery, and interface behavior using Elastic Network Models (GNM/ANM) and deformation analysis.
 
-### 2. Safety and Filtering
+#### A. Normal Mode Analysis (NMA)
 
-* Allergenicity prediction using AlgPred2.
-* Toxicity prediction using ToxinPred3.
-* Annotation of all predicted epitopes with safety metadata.
-* Workflow for starting directly from user-provided epitopes.
+* Supports both GNM and ANM with adjustable cutoffs and mode counts
+* Outputs include:
 
-### 3. Construct Assembly
+  * Mean-square fluctuations (MSF), theoretical B-factors
+  * Covariance and cross-correlation matrices
+  * Eigenvalues and visualizable mode vectors
+* Mode animations and conformer ensemble generation
+* PCA projection of conformer space
 
-* Flexible construct builder supporting multiple design patterns.
-* Library of adjuvants.
-* Automated linker insertion (AAY, GPGPG, EAAAK, and flexible linkers).
-* Final construct exported in FASTA format.
+#### B. Pocket Dynamics
 
-### 4. Physicochemical Characterization
+* Detect pocket residues automatically
+* Analyze pocket volume fluctuation across ANM modes
+* Compute RMSF of pocket residues, pocket radius, and accessibility score
+* Export ranked flexibility tables and pocket fluctuation plots
 
-* ProtParam-like computation using Biopython.
-* Outputs molecular weight, theoretical pI, instability index, aliphatic index, GRAVY, and amino acid composition.
+#### C. Perturbation Response Scanning (PRS)
 
-### 5. Structure Prediction
+* Apply systematic perturbations to individual residues
+* Identify allosteric sensor and effector residues
+* Visualize PRS sensitivity and effectiveness matrices (heatmaps)
+* Export numeric matrices and top-ranked residue lists
 
-* Integrated ESMFold-based prediction backend.
-* Automated PDB file generation.
-* Structures saved to session-specific results directory.
+#### D. Apo vs Holo Comparative Dynamics
 
-### 6. ProDy-Based Structural Dynamics and NMA
+* Upload apo (unbound) and holo (bound) structures
+* Compute deformation vectors and project them onto ANM modes
+* Identify active modes contributing to functional conformational changes
 
-The platform integrates a fully featured ProDy pipeline including:
+#### E. Interface Dynamics
 
-#### Normal Mode Analysis (NMA)
+* Automatically detect inter-chain or protein–ligand interface residues
+* Quantify their local flexibility and dynamics
+* Export interface mobility statistics
 
-* ANM or GNM with configurable cutoffs.
-* Calculation of mean-square fluctuations and theoretical B-factors.
-* Mode shape generation and visualization.
-* Covariance and cross-correlation matrices.
-* Chain-aware analysis.
-* Interface residue detection with user-defined distance thresholds.
+#### F. Domain & Hinge Detection
 
-#### Conformer Ensemble Generation and PCA
+* Extract domain-wise motions from mode vectors
+* Detect hinge regions driving major conformational transitions
+* Visualize per-residue mobility and deformation arrows
 
-* ANM-driven conformer ensemble generation.
-* Principal Component Analysis (PCA) of ensemble.
-* Comparison of ANM modes with PCA eigenvectors.
+---
 
-#### Allosteric and Interface Dynamics
+### 2. Deformability Analysis (ProDy-Powered)
 
-* Allosteric pathway analysis for ANM models.
-* Interface dynamics quantification.
-* Export of all results, plots, and numerical matrices.
+* Compare any two conformations (e.g., mutant vs wild-type, apo vs complex)
+* Compute deformation vectors between structures
+* Assess overlap with NMA modes to identify dominant contributors
+* Export overlap plots and numeric reports
 
-### 7. Deformability Analysis
+---
 
-* Reference vs target structure comparison.
-* Computation of deformation vectors.
-* Squared overlap and cumulative overlap against NMA modes.
-* Identification of key contributing modes.
-* Plots and numerical data exported.
+### 3. Integrated Immunoinformatics Suite 
 
-### 8. Session-Based Execution and Reproducibility
+This module complements the dynamics analysis with a streamlined vaccine design workflow from epitope prediction to structure modeling.
 
-* Each analysis session receives a dedicated directory under `results/` containing:
+#### A. Epitope Prediction and Filtering
 
-  * Epitope prediction tables
-  * Final construct
-  * Structure prediction output (PDB)
-  * NMA and PCA analysis results
-  * Deformability analysis output
-* Ensures reproducibility and organized storage.
+* Predict B-cell epitopes using bundled NetBCE
+* Predict MHC-I and MHC-II binding using IEDB (NetMHCpan & NetMHCIIpan EL)
+* Filter using allergenicity (AlgPred2) and toxicity (ToxinPred3)
+* Upload known epitopes directly if desired
+
+#### B. Construct Assembly
+
+* Combine epitopes into multi-epitope vaccine constructs
+* Add adjuvants and standard linkers (AAY, GPGPG, EAAAK)
+* Export as a clean FASTA sequence
+
+#### C. Structure Prediction (for Constructs)
+
+* Predict 3D structure of final construct using ESMFold
+* PDB automatically stored and passed to NMA modules for structural analysis
+
+---
+
+### 4. Session-Based Execution
+
+* Every analysis creates a unique `results/` folder containing:
+
+  * Structure and epitope files
+  * Dynamics plots, matrices, and conformers
+  * Pocket and PRS results
+  * Construct FASTA and predicted structure (if applicable)
+* Ensures reproducibility and traceability across workflows
+
+---
+
+Let me know if you want this translated into documentation, landing page content, or a visual summary.
+
 
 ## Project Structure
 
 ```
 VaccineBuilder/
-├── app.py                      # Flask backend
-├── mhc1.py                     # MHC-I prediction wrapper for IEDB API
-├── mhc2.py                     # MHC-II prediction wrapper for IEDB API
-├── model.py                    # ESMFold structure prediction
-├── prody_nma.py                # ProDy Normal Mode Analysis workflow
-├── deformation_analysis.py     # ProDy-based deformability comparison
-├── requirements.txt            # Python dependencies
-├── templates/                  # HTML templates
-├── static/                     # CSS/JS assets
-├── NetBCE/                     # Bundled NetBCE model and scripts
-└── results/                    # Session-specific analysis outputs
+├── app.py
+├── mhc1.py
+├── mhc2.py
+├── model.py
+├── prody_nma.py
+├── deformation_analysis.py
+├── pocket_dynamics.py
+├── prs_analysis.py
+├── comparative_anm.py
+├── requirements.txt
+├── templates/
+├── static/
+├── NetBCE/
+└── results/
 ```
+
+---
 
 ## Workflows
 
-### Sequence-Based Prediction Workflow
+### A. Sequence-Based Prediction
 
-1. Input FASTA sequence.
-2. Select alleles for MHC-I and MHC-II.
-3. Run epitope predictions.
-4. Review and filter epitopes.
-5. Perform safety screening.
-6. Assemble construct.
-7. Run ProtParam analysis.
-8. Predict structure with ESMFold.
-9. Run NMA and/or deformability analysis.
-10. Export all results.
+1. Upload sequence.
+2. Predict epitopes.
+3. Filter and annotate.
+4. Design construct.
+5. Predict structure.
+6. Run NMA or Pocket/PRS as needed.
 
-### Start from Predicted Epitopes
+### B. Start from Epitopes
 
-1. Provide precomputed B-cell, CTL, and HTL epitopes.
-2. Perform safety filtering.
-3. Assemble construct and run downstream analysis.
+1. Paste known epitopes.
+2. Skip prediction.
+3. Continue with construct → structure → dynamics.
 
-### Standalone Normal Mode Analysis
+### C. Standalone NMA & Pocket Analysis
 
-1. Upload any PDB structure (single or multi-chain).
-2. Configure ANM/GNM parameters.
-3. Perform full NMA, PCA, allosteric, interface, and ensemble analysis.
-4. Download outputs.
+1. Upload any protein PDB.
+2. Select ANM/GNM.
+3. Run dynamics, pocket, PRS, etc.
+4. Download heatmaps, PDBs, tables.
 
-### Standalone Deformability Analysis
+### D. Deformability Analysis (Comparative)
 
-1. Upload reference (unbound) and target (bound) structures.
-2. Specify chain IDs.
-3. Compute deformation vectors.
-4. Calculate squared overlaps and cumulative contributions.
-5. Export results.
+1. Upload unbound and bound PDBs.
+2. Run deformation vector + mode projection.
+3. Analyze contributing modes.
 
-## Dependencies
+---
+
+## Requirements
 
 * Python 3.7+
-* Flask
-* ProDy
-* Matplotlib
-* Biopython
-* Requests
-* Pandas
-* NetBCE (bundled)
+* Flask, ProDy, Matplotlib, Biopython, Pandas
+* External access for IEDB APIs
+* NetBCE locally available
 
-## Notes
-
-* IEDB Next-Generation API access requires an active internet connection.
-* ESMFold prediction uses the platform-defined model backend.
-* The platform is intended for computational research and does not provide clinical recommendations.
+---

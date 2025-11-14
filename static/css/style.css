@@ -386,22 +386,20 @@ body {
 
 .tool-tile-buttons .btn {
     width: 100%;
-    padding: 1rem 2rem !important;
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    min-height: 50px;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600;
 }
 
 .tool-tile .btn {
     width: 100%;
     margin-top: auto;
-    padding: 1rem 2rem !important;
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    min-height: 50px;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600;
 }
 
-/* Scroll Hint Arrows */
+/* Scroll Hint Arrow */
 .scroll-hint {
     position: absolute;
     right: 0;
@@ -421,39 +419,8 @@ body {
     z-index: 10;
 }
 
-.scroll-hint-left {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 80px;
-    height: 100%;
-    background: linear-gradient(to right, 
-        var(--primary-dark), 
-        transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: all;
-    cursor: pointer;
-    transition: opacity var(--transition-normal);
-    z-index: 10;
-    opacity: 0;
-}
-
-.scroll-hint-left.visible {
-    opacity: 1;
-}
-
-.scroll-hint:hover,
-.scroll-hint-left:hover {
+.scroll-hint:hover {
     background: linear-gradient(to left, 
-        rgba(10, 0, 21, 0.95), 
-        transparent);
-}
-
-.scroll-hint-left:hover {
-    background: linear-gradient(to right, 
         rgba(10, 0, 21, 0.95), 
         transparent);
 }
