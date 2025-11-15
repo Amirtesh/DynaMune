@@ -1,0 +1,13 @@
+{
+  "reportMissingImports": "none",
+  "reportUndefinedVariable": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportAttributeAccessIssue": "none",
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "off",
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/NetBCE"
+  ]
+}

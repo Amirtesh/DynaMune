@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 """
 ESMFold API Protein Structure Prediction
 Predict protein 3D structures using Meta's ESMFold public API.

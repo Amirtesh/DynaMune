@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 """
 ProDy Pocket Dynamics Analysis Script
 
@@ -35,7 +36,7 @@ import seaborn as sns
 from scipy.spatial.distance import cdist, pdist, squareform
 
 try:
-    from prody import *
+    from prody import *  # type: ignore
 except ImportError:
     print("Error: ProDy is not installed. Install with: pip install prody")
     sys.exit(1)

@@ -1,3 +1,4 @@
+# version1.0
 from flask import Flask, render_template, request, jsonify, send_file, session
 import os
 import subprocess
@@ -1497,7 +1498,7 @@ def run_anm_comparison():
         if result.returncode != 0:
             # Try to get available chains from the PDB files
             try:
-                from prody import parsePDB
+                from prody import parsePDB  # type: ignore
                 apo_struct = parsePDB(str(apo_path))
                 complex_struct = parsePDB(str(complex_path))
                 
@@ -2148,6 +2149,423 @@ def download_domain_hinge_zip():
         return str(e), 500
 
 
+@app.route('/contact_stability')
+def contact_stability_page():
+    """Render contact and stability analysis page"""
+    get_session_dir()
+    return render_template('contact_stability.html')
+
+
+@app.route('/run_contact_stability', methods=['POST'])
+def run_contact_stability():
+    """Run contact and stability analysis"""
+    try:
+        if 'pdb_file' not in request.files:
+            return jsonify({'success': False, 'error': 'PDB file is required'})
+        
+        pdb_file = request.files['pdb_file']
+        if pdb_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select a PDB file'})
+        
+        if not pdb_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload a PDB file'})
+        
+        # Get parameters
+        chain_a = request.form.get('chain_a', '').strip()
+        chain_b = request.form.get('chain_b', '').strip()
+        contact_cutoff = float(request.form.get('contact_cutoff', 5.0))
+        neighbor_cutoff = float(request.form.get('neighbor_cutoff', 4.5))
+        hbond_cutoff = float(request.form.get('hbond_cutoff', 3.5))
+        saltbridge_cutoff = float(request.form.get('saltbridge_cutoff', 4.0))
+        skip_sasa = request.form.get('skip_sasa', '0') == '1'
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB file
+        pdb_path = session_dir / 'structure.pdb'
+        pdb_file.save(str(pdb_path))
+        
+        # Check if prody_contact_stability.py exists
+        script_path = BASE_DIR / 'prody_contact_stability.py'
+        if not script_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Contact stability analysis script not found at {script_path}'
+            })
+        
+        # Build command
+        cmd = ['python3', str(script_path),
+               '--pdb', str(pdb_path),
+               '--contact-cutoff', str(contact_cutoff),
+               '--neighbor-cutoff', str(neighbor_cutoff),
+               '--hbond-cutoff', str(hbond_cutoff),
+               '--saltbridge-cutoff', str(saltbridge_cutoff)]
+        
+        if chain_a:
+            cmd.extend(['--chain-a', chain_a])
+        if chain_b:
+            cmd.extend(['--chain-b', chain_b])
+        if skip_sasa:
+            cmd.append('--skip-sasa')
+        
+        print(f"Running contact stability command: {' '.join(cmd)}")
+        
+        # Run analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed.\n\nError output:\n{result.stderr}',
+                'output': result.stdout
+            })
+        
+        # Look for output directory - script creates structure_Contact_Stability_Analysis/
+        output_dir = None
+        for item in session_dir.iterdir():
+            if item.is_dir() and 'Contact_Stability_Analysis' in item.name:
+                output_dir = item
+                break
+        
+        if output_dir and output_dir.exists():
+            plot_files = sorted([f.name for f in output_dir.glob('*.png')])
+            session['contact_stability_dir'] = output_dir.name
+            
+            return jsonify({
+                'success': True,
+                'message': 'Contact and stability analysis completed successfully',
+                'output': result.stdout,
+                'plots': plot_files
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found'
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing parameters or using a smaller structure.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/get_contact_stability_plot/<filename>')
+def get_contact_stability_plot(filename):
+    """Serve a contact stability plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_stability_dir', 'structure_Contact_Stability_Analysis')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(str(file_path), mimetype='image/png')
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_contact_stability/<filename>')
+def download_contact_stability(filename):
+    """Download a specific contact stability plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_stability_dir', 'structure_Contact_Stability_Analysis')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_contact_stability_zip')
+def download_contact_stability_zip():
+    """Download all contact stability results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_stability_dir', 'structure_Contact_Stability_Analysis')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='contact_stability_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/contact_timeline')
+def contact_timeline_page():
+    """Render inter-chain contact timeline analysis page"""
+    get_session_dir()
+    return render_template('contact_timeline.html')
+
+
+@app.route('/run_contact_timeline', methods=['POST'])
+def run_contact_timeline():
+    """Run inter-chain contact timeline analysis"""
+    try:
+        if 'pdb_file' not in request.files:
+            return jsonify({'success': False, 'error': 'PDB file is required'})
+        
+        pdb_file = request.files['pdb_file']
+        if pdb_file.filename == '':
+            return jsonify({'success': False, 'error': 'Please select a PDB file'})
+        
+        if not pdb_file.filename.endswith('.pdb'):
+            return jsonify({'success': False, 'error': 'Invalid file type. Please upload a PDB file'})
+        
+        # Get parameters
+        chain_a = request.form.get('chain_a', '').strip()
+        chain_b = request.form.get('chain_b', '').strip()
+        anm_modes = int(request.form.get('anm_modes', 20))
+        num_conformers = int(request.form.get('num_conformers', 20))
+        contact_cutoff = float(request.form.get('contact_cutoff', 5.0))
+        mode_amplitude = float(request.form.get('mode_amplitude', 1.0))
+        anm_cutoff = float(request.form.get('anm_cutoff', 15.0))
+        persistence_threshold = float(request.form.get('persistence_threshold', 75.0)) / 100.0  # Convert % to decimal
+        
+        # Get session directory
+        session_dir = get_session_dir()
+        
+        # Save uploaded PDB file
+        pdb_path = session_dir / 'structure.pdb'
+        pdb_file.save(str(pdb_path))
+        
+        # Check if contact_timeline.py exists
+        script_path = BASE_DIR / 'contact_timeline.py'
+        if not script_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Contact timeline analysis script not found at {script_path}'
+            })
+        
+        # Create output directory within session
+        output_dir = session_dir / 'contact_timeline_output'
+        output_dir.mkdir(exist_ok=True)
+        
+        # Build command
+        cmd = ['python3', str(script_path),
+               '--pdb', str(pdb_path),
+               '--anm-modes', str(anm_modes),
+               '--num-conformers', str(num_conformers),
+               '--contact-cutoff', str(contact_cutoff),
+               '--mode-amplitude', str(mode_amplitude),
+               '--anm-cutoff', str(anm_cutoff),
+               '--persistence-threshold', str(persistence_threshold),
+               '--output', str(output_dir)]
+        
+        if chain_a:
+            cmd.extend(['--chain-a', chain_a])
+        if chain_b:
+            cmd.extend(['--chain-b', chain_b])
+        
+        print(f"Running contact timeline command: {' '.join(cmd)}")
+        
+        # Run analysis
+        import subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(session_dir),
+            capture_output=True,
+            text=True,
+            timeout=900  # 15 minutes timeout for this analysis
+        )
+        
+        print(f"Return code: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        
+        if result.returncode != 0:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed.\n\nError output:\n{result.stderr}',
+                'output': result.stdout
+            })
+        
+        # Look for output directory - script creates structure_Contact_Timeline/ or uses --output
+        output_analysis_dir = None
+        
+        # First check if output was created in specified directory
+        if output_dir.exists() and any(output_dir.glob('*.png')):
+            output_analysis_dir = output_dir
+        else:
+            # Look for auto-generated directory
+            for item in session_dir.iterdir():
+                if item.is_dir() and 'Contact_Timeline' in item.name:
+                    output_analysis_dir = item
+                    break
+        
+        if output_analysis_dir and output_analysis_dir.exists():
+            plot_files = sorted([f.name for f in output_analysis_dir.glob('*.png')])
+            session['contact_timeline_dir'] = output_analysis_dir.name
+            
+            # Parse stdout for summary statistics
+            message = 'Contact timeline analysis completed successfully'
+            if 'Total contacts detected:' in result.stdout:
+                lines = result.stdout.split('\n')
+                for line in lines:
+                    if 'Total contacts detected:' in line or 'Stable contacts' in line:
+                        message += f". {line.strip()}"
+            
+            return jsonify({
+                'success': True,
+                'message': message,
+                'output': result.stdout,
+                'plots': plot_files
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analysis completed but output directory not found'
+            })
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Analysis timed out. Try reducing the number of conformers or modes.'
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'success': False, 'error': f'{str(e)}\n\n{traceback.format_exc()}'})
+
+
+@app.route('/get_contact_timeline_plot/<filename>')
+def get_contact_timeline_plot(filename):
+    """Serve a contact timeline plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_timeline_dir', 'contact_timeline_output')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(str(file_path), mimetype='image/png')
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_contact_timeline/<filename>')
+def download_contact_timeline(filename):
+    """Download a specific contact timeline plot file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_timeline_dir', 'contact_timeline_output')
+        output_dir = session_dir / dir_name
+        
+        file_path = output_dir / filename
+        
+        if not file_path.exists():
+            return f"File not found: {filename}", 404
+        
+        return send_file(
+            str(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route('/download_contact_timeline_zip')
+def download_contact_timeline_zip():
+    """Download all contact timeline results as a ZIP file"""
+    try:
+        session_id = session.get('session_id')
+        if not session_id:
+            return "Session expired", 404
+        
+        session_dir = RESULTS_DIR / session_id
+        dir_name = session.get('contact_timeline_dir', 'contact_timeline_output')
+        output_dir = session_dir / dir_name
+        
+        if not output_dir.exists():
+            return "Results directory not found", 404
+        
+        # Create a ZIP file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in output_dir.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(output_dir)
+                    zipf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='contact_timeline_results.zip'
+        )
+    except Exception as e:
+        return str(e), 500
+
+
 @app.route('/deformability')
 def deformability_page():
     """Render deformability analysis page"""
@@ -2265,7 +2683,7 @@ def run_deformability_analysis():
         if result.returncode != 0:
             # Try to get available chains from the PDB files
             try:
-                from prody import parsePDB
+                from prody import parsePDB  # type: ignore
                 ref_struct = parsePDB(str(ref_path))
                 target_struct = parsePDB(str(target_path))
                 

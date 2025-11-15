@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#version 1.0
 # Automated Multi Epitope Vaccine Builder - Run Script
 
 echo "=========================================="

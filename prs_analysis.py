@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 """
 ProDy Perturbation Response Scanning (PRS) Analysis Script
 
@@ -36,7 +37,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 try:
-    from prody import *
+    from prody import *  # type: ignore
 except ImportError:
     print("Error: ProDy is not installed. Install with: pip install prody")
     sys.exit(1)

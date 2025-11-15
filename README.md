@@ -1,10 +1,10 @@
 # DynaMune
+
 ## Unified Platform for Protein Dynamics with Integrated Immunoinformatics Tools
 
 This platform provides an integrated, end-to-end environment for multi-epitope immunoinformatics, construct assembly, structural modeling, and advanced protein dynamics analysis. It combines epitope prediction, safety screening, construct design, 3D structure prediction, and ProDy-based Normal Mode and deformability analyses into a unified workflow. The tool supports both vaccine-oriented and general protein structural studies, including ligand-binding and allostery exploration.
 
 ---
-
 
 ## Features
 
@@ -55,7 +55,45 @@ A comprehensive toolkit for exploring protein motions, flexibility, allostery, a
 * Detect hinge regions driving major conformational transitions
 * Visualize per-residue mobility and deformation arrows
 
+#### G. Contact and Stability Analysis
+
+* Analyze inter-chain residue contacts, hydrogen bonds, salt bridges, and interface stability
+* Customizable cutoffs for:
+
+  * Contact distance
+  * Hydrogen bond angle and distance
+  * Salt bridge electrostatic distance
+* Outputs:
+
+  * Plots and visualizations of interface metrics
+  * Hydrophobic/hydrophilic interaction scores
+  * Residue-wise contact heatmaps and PNG exports
+* Supports dual-chain systems (A/B or auto-detect)
+* Interactive form with pre-filled cutoff defaults and editable fields
+* Full output (plots and data) downloadable as individual files or a zip archive
+
+### H. Inter-Chain Contact Timeline Analysis
+
+* Simulate contact evolution across an ANM-driven ensemble
+* Track the persistence of inter-chain residue-residue contacts through conformers
+* Outputs include:
+
+  * **Contact Timeline Heatmap** — visualizing when each contact forms/breaks
+  * **Contact Persistence Plot** — highlighting residue pairs with highest sustained interaction
+  * **Contact Network Graph** — showing global inter-residue interaction network
+* Parameters (user-editable or defaulted):
+
+  * ANM cutoff distance
+  * Number of conformers to generate
+  * Contact distance threshold
+  * Mode amplitude
+  * Mode count
+  * Persistence threshold
+* Supports up to 2 chains (user-specified or auto-detected)
+* Results can be downloaded individually or as a complete archive
+
 ---
+
 
 ### 2. Deformability Analysis (ProDy-Powered)
 
@@ -66,7 +104,7 @@ A comprehensive toolkit for exploring protein motions, flexibility, allostery, a
 
 ---
 
-### 3. Integrated Immunoinformatics Suite 
+### 3. Integrated Immunoinformatics Suite
 
 This module complements the dynamics analysis with a streamlined vaccine design workflow from epitope prediction to structure modeling.
 
@@ -102,10 +140,7 @@ This module complements the dynamics analysis with a streamlined vaccine design 
 
 ---
 
-Let me know if you want this translated into documentation, landing page content, or a visual summary.
-
-
-## Project Structure
+### 📁 Project Structure 
 
 ```
 VaccineBuilder/
@@ -118,6 +153,8 @@ VaccineBuilder/
 ├── pocket_dynamics.py
 ├── prs_analysis.py
 ├── comparative_anm.py
+├── contact_stability.py
+├── contact_timeline.py          
 ├── requirements.txt
 ├── templates/
 ├── static/
@@ -157,6 +194,25 @@ VaccineBuilder/
 2. Run deformation vector + mode projection.
 3. Analyze contributing modes.
 
+### E. Contact and Stability Analysis
+
+1. Upload multi-chain PDB (max 2 chains).
+2. Adjust contact and interaction cutoffs (or keep defaults).
+3. View and download:
+
+   * PNG interaction plots
+   * Hydrophobicity/charge-based metrics
+   * Contact matrices and summaries
+4. Download all results or zip archive
+
+### F. Inter-Chain Contact Timeline
+
+1. Upload multi-chain PDB structure (2 chains max)
+2. Choose ANM parameters (cutoff, modes, amplitude)
+3. Run simulation to generate conformer ensemble
+4. View timeline heatmap, contact persistence graph, and contact network
+5. Export figures or all results together
+
 ---
 
 ## Requirements
@@ -165,5 +221,3 @@ VaccineBuilder/
 * Flask, ProDy, Matplotlib, Biopython, Pandas
 * External access for IEDB APIs
 * NetBCE locally available
-
----

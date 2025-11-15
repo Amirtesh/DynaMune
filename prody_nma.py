@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 """
 Comprehensive ProDy NMA & Ensemble PCA Analysis Script for Multi-Chain Complexes
 
@@ -27,7 +28,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 from scipy.spatial.distance import pdist, squareform
 
 try:
-    from prody import *
+    from prody import *  # type: ignore
 except ImportError:
     print("Error: ProDy is not installed. Install with: pip install prody")
     sys.exit(1)

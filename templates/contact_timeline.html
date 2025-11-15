@@ -1,0 +1,286 @@
+<!-- version1.0 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inter-Chain Contact Timeline - DynaMune</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Banner -->
+    <div class="app-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-project-diagram header-icon"></i>
+                    <div>
+                        <h1 class="app-title mb-0">Inter-Chain Contact Timeline</h1>
+                        <p class="app-subtitle mb-0">Track Contact Evolution Across ANM Conformations</p>
+                    </div>
+                </div>
+                <a href="/" class="btn btn-outline-light">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        
+        <!-- Upload and Parameters Section -->
+        <div class="card main-card slide-up">
+            <h3><i class="fas fa-upload"></i> Upload Structure & Configure Analysis</h3>
+            <p class="text-muted">Upload multi-chain PDB structure and set ANM/contact parameters</p>
+            
+            <form id="analysisForm">
+                <!-- PDB Upload -->
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-file"></i> Protein Complex Structure (PDB)
+                            <span class="required">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="pdbFile" accept=".pdb" required>
+                        <small class="form-text">Upload multi-chain protein structure (2 chains maximum)</small>
+                    </div>
+                </div>
+                
+                <!-- Chain Selection -->
+                <div class="card mb-3" style="background: rgba(100, 149, 237, 0.05); border: 1px solid rgba(100, 149, 237, 0.2);">
+                    <div class="card-body">
+                        <h5><i class="fas fa-link"></i> Chain Selection</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-chain"></i> Chain A
+                                </label>
+                                <input type="text" class="form-control custom-textarea" id="chainA" placeholder="Default: A (auto-detected if blank)">
+                                <small class="form-text">First chain - leave blank for auto-select</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-chain"></i> Chain B
+                                </label>
+                                <input type="text" class="form-control custom-textarea" id="chainB" placeholder="Default: B (auto-detected if blank)">
+                                <small class="form-text">Second chain - leave blank for auto-select</small>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> If chains are not specified, the first two chains in the structure will be automatically selected.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ANM Parameters -->
+                <div class="card mb-3" style="background: rgba(100, 149, 237, 0.05); border: 1px solid rgba(100, 149, 237, 0.2);">
+                    <div class="card-body">
+                        <h5><i class="fas fa-wave-square"></i> ANM Parameters</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-wave-square"></i> ANM Modes
+                                </label>
+                                <input type="number" class="form-control" id="anmModes" value="20" min="1" max="100">
+                                <small class="form-text">Default: 20</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-layer-group"></i> Number of Conformers
+                                </label>
+                                <input type="number" class="form-control" id="numConformers" value="20" min="5" max="100">
+                                <small class="form-text">Default: 20</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-ruler"></i> ANM Cutoff (Å)
+                                </label>
+                                <input type="number" class="form-control" id="anmCutoff" value="15.0" min="5.0" max="30.0" step="0.5">
+                                <small class="form-text">Default: 15.0</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-arrows-alt"></i> Mode Amplitude (RMSD Å)
+                                </label>
+                                <input type="number" class="form-control" id="modeAmplitude" value="1.0" min="0.1" max="5.0" step="0.1">
+                                <small class="form-text">Default: 1.0</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Parameters -->
+                <div class="card mb-3" style="background: rgba(100, 149, 237, 0.05); border: 1px solid rgba(100, 149, 237, 0.2);">
+                    <div class="card-body">
+                        <h5><i class="fas fa-sliders-h"></i> Contact Analysis Parameters</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-arrows-alt-h"></i> Contact Cutoff Distance (Å)
+                                </label>
+                                <input type="number" class="form-control" id="contactCutoff" value="5.0" min="3.0" max="10.0" step="0.1">
+                                <small class="form-text">Default: 5.0</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-percentage"></i> Persistence Threshold (%)
+                                </label>
+                                <input type="number" class="form-control" id="persistenceThreshold" value="75.0" min="0" max="100" step="5">
+                                <small class="form-text">Default: 75.0</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-success btn-construct" id="runAnalysisBtn">
+                        <i class="fas fa-play-circle"></i> Run Contact Timeline Analysis
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section (Hidden by default) -->
+        <div class="card main-card fade-in" id="resultsSection" style="display: none;">
+            <h3><i class="fas fa-chart-area"></i> Analysis Results</h3>
+            
+            <div class="alert alert-success" id="successMessage" style="display: none;">
+                <i class="fas fa-check-circle"></i>
+                <span id="successText">Analysis completed successfully!</span>
+            </div>
+            
+            <div id="plotsContainer"></div>
+            
+            <!-- Download Button -->
+            <div class="text-center mt-4">
+                <h4><i class="fas fa-download"></i> Download Results</h4>
+                <a href="#" class="btn btn-download" id="downloadZipBtn">
+                    <i class="fas fa-file-archive"></i> Download Complete Results (ZIP)
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container text-center">
+            <p>&copy; 2025 DynaMune – Unified Platform for Protein Dynamics and Protein Based Vaccine Design</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        $('#analysisForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const pdbFile = $('#pdbFile')[0].files[0];
+            
+            if (!pdbFile) {
+                alert('Please select a PDB file');
+                return;
+            }
+            
+            formData.append('pdb_file', pdbFile);
+            formData.append('chain_a', $('#chainA').val());
+            formData.append('chain_b', $('#chainB').val());
+            formData.append('anm_modes', $('#anmModes').val());
+            formData.append('num_conformers', $('#numConformers').val());
+            formData.append('contact_cutoff', $('#contactCutoff').val());
+            formData.append('mode_amplitude', $('#modeAmplitude').val());
+            formData.append('anm_cutoff', $('#anmCutoff').val());
+            formData.append('persistence_threshold', $('#persistenceThreshold').val());
+            
+            const $btn = $('#runAnalysisBtn');
+            const originalText = $btn.html();
+            $btn.html('<i class="fas fa-spinner fa-spin"></i> Running Analysis...').prop('disabled', true);
+            
+            $.ajax({
+                url: '/run_contact_timeline',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $btn.html(originalText).prop('disabled', false);
+                    
+                    if (response.success) {
+                        $('#successText').text(response.message);
+                        $('#successMessage').show();
+                        
+                        // Display plots in specific order
+                        const plotOrder = ['contact_network.png', 'contact_persistence.png', 'contact_timeline_heatmap.png'];
+                        let plotsHtml = '<div class="row">';
+                        
+                        plotOrder.forEach(function(plot) {
+                            if (response.plots.includes(plot)) {
+                                const plotTitle = plot.replace('.png', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                plotsHtml += `
+                                    <div class="col-md-12 mb-4">
+                                        <div class="plot-container">
+                                            <h5 class="text-center mb-3">${plotTitle}</h5>
+                                            <img src="/get_contact_timeline_plot/${plot}" alt="${plot}" class="img-fluid">
+                                            <div class="text-center mt-2">
+                                                <a href="/download_contact_timeline/${plot}" class="btn btn-sm btn-download">
+                                                    <i class="fas fa-download"></i> Download ${plot}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        plotsHtml += '</div>';
+                        
+                        $('#plotsContainer').html(plotsHtml);
+                        $('#downloadZipBtn').attr('href', '/download_contact_timeline_zip');
+                        $('#resultsSection').show();
+                        
+                        // Scroll to results
+                        $('html, body').animate({
+                            scrollTop: $('#resultsSection').offset().top - 100
+                        }, 500);
+                    } else {
+                        alert('Error: ' + response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.html(originalText).prop('disabled', false);
+                    alert('An error occurred: ' + error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 """
 MHC-II Binding Prediction using IEDB Next-Generation API
 Reads sequences from test.fasta and alleles from alleles.txt

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# version1.0
 # -*- coding: utf-8 -*-
 """
 ANM comparison with sequence-based chain alignment & mapping.
@@ -30,7 +31,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from prody import parsePDB, ANM, calcOverlap
+from prody import parsePDB, ANM, calcOverlap  # type: ignore
 from Bio.PDB.Polypeptide import three_to_one
 from Bio import pairwise2
 

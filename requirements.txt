@@ -5,3 +5,5 @@ biopython==1.81
 requests
 numpy
 matplotlib
+seaborn
+prody
