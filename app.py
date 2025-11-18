@@ -217,10 +217,23 @@ def predict():
             f.write(fasta_content)
         
         # Run NetBCE prediction
+        # NOTE: NetBCE requires Python 3.7 and runs in an isolated "NetBCE" conda environment
+        # Flask backend remains on Python 3.10 (dynamune environment)
+        # Environment switching is limited to this subprocess only
         try:
+            # Construct the command to run NetBCE in its dedicated conda environment
+            # Using bash with explicit conda activation (avoids ~/.bashrc dependency)
+            netbce_cmd = (
+                f'bash -c "source $(conda info --base)/etc/profile.d/conda.sh && '
+                f'conda activate NetBCE && '
+                f'cd {NETBCE_PREDICTION_DIR} && '
+                f'python NetBCE_prediction.py -f test.fasta -o ../result/ && '
+                f'conda deactivate"'
+            )
+            
             result = subprocess.run(
-                ['python3', 'NetBCE_prediction.py', '-f', 'test.fasta', '-o', '../result/'],
-                cwd=NETBCE_PREDICTION_DIR,
+                netbce_cmd,
+                shell=True,
                 capture_output=True,
                 text=True,
                 timeout=2000
@@ -256,6 +269,8 @@ def predict():
                 
         except subprocess.TimeoutExpired:
             return jsonify({'success': False, 'error': 'NetBCE prediction timed out'})
+        except subprocess.CalledProcessError as e:
+            return jsonify({'success': False, 'error': f'NetBCE prediction failed: {str(e)}'})
         except Exception as e:
             return jsonify({'success': False, 'error': f'NetBCE prediction error: {str(e)}'})
         

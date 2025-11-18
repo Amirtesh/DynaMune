@@ -110,54 +110,6 @@ $(document).ready(function() {
         });
     });
     
-    // Allele input formatting
-    $('#mhc1_alleles, #mhc2_alleles').on('keypress', function(e) {
-        e.preventDefault();
-        
-        // Validate form
-        if (!validateForm()) {
-            return;
-        }
-        
-        // Get form data
-        const formData = new FormData(this);
-        
-        // Show loading overlay
-        showLoading();
-        
-        // Start polling for status
-        startStatusPolling();
-        
-        // Submit form via AJAX
-        $.ajax({
-            url: '/predict',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    // Success - redirect to results page
-                    updateLoadingText('All predictions complete! Redirecting...');
-                    $('#progressBar').css('width', '100%');
-                    setTimeout(function() {
-                        window.location.href = '/results';
-                    }, 1000);
-                } else {
-                    // Error
-                    hideLoading();
-                    stopStatusPolling();
-                    showError(response.error || 'An error occurred during prediction');
-                }
-            },
-            error: function(xhr, status, error) {
-                hideLoading();
-                stopStatusPolling();
-                showError('Server error: ' + error);
-            }
-        });
-    });
-    
     // Form validation
     function validateForm() {
         const fasta = $('#fasta_sequence').val().trim();
