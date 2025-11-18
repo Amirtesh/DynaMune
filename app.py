@@ -276,18 +276,18 @@ def predict():
         
         # Step 2: MHC-I Prediction
         print("Step 2: Running MHC-I prediction...")
-        test_fasta = BASE_DIR / 'test.fasta'
+        test_fasta = session_dir / 'test.fasta'
         with open(test_fasta, 'w') as f:
             f.write(fasta_content)
         
-        mhc1_alleles_file = BASE_DIR / 'alleles_mhc1.txt'
+        mhc1_alleles_file = session_dir / 'alleles_mhc1.txt'
         with open(mhc1_alleles_file, 'w') as f:
             f.write(mhc1_alleles)
         
         try:
             result = subprocess.run(
-                ['python3', 'mhc1.py', 'test.fasta', 'alleles_mhc1.txt'],
-                cwd=BASE_DIR,
+                ['python3', str(BASE_DIR / 'mhc1.py'), str(test_fasta), str(mhc1_alleles_file)],
+                cwd=str(session_dir),
                 capture_output=True,
                 text=True,
                 timeout=2000
@@ -297,7 +297,7 @@ def predict():
                 return jsonify({'success': False, 'error': f'MHC-I prediction failed: {result.stderr}'})
             
             # Move and sort MHC-I predictions
-            mhc1_output = BASE_DIR / 'mhc1_prediction.csv'
+            mhc1_output = session_dir / 'mhc1_prediction.csv'
             if mhc1_output.exists():
                 df_mhc1 = pd.read_csv(mhc1_output)
                 # Sort by netmhcpan_el_score (descending)
@@ -315,14 +315,14 @@ def predict():
         
         # Step 3: MHC-II Prediction
         print("Step 3: Running MHC-II prediction...")
-        mhc2_alleles_file = BASE_DIR / 'alleles_mhc2.txt'
+        mhc2_alleles_file = session_dir / 'alleles_mhc2.txt'
         with open(mhc2_alleles_file, 'w') as f:
             f.write(mhc2_alleles)
         
         try:
             result = subprocess.run(
-                ['python3', 'mhc2.py', 'test.fasta', 'alleles_mhc2.txt'],
-                cwd=BASE_DIR,
+                ['python3', str(BASE_DIR / 'mhc2.py'), str(test_fasta), str(mhc2_alleles_file)],
+                cwd=str(session_dir),
                 capture_output=True,
                 text=True,
                 timeout=2000
@@ -332,7 +332,7 @@ def predict():
                 return jsonify({'success': False, 'error': f'MHC-II prediction failed: {result.stderr}'})
             
             # Move and sort MHC-II predictions
-            mhc2_output = BASE_DIR / 'mhc2_prediction.csv'
+            mhc2_output = session_dir / 'mhc2_prediction.csv'
             if mhc2_output.exists():
                 df_mhc2 = pd.read_csv(mhc2_output)
                 # Sort by netmhciipan_el_score (descending)
