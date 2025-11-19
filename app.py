@@ -13,12 +13,12 @@ import json
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 app = Flask(__name__)
-app.secret_key = 'vaccine_builder_secret_key_2025'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'vaccine_builder_secret_key_2025_fallback')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Store active session ID temporarily
-current_prediction_session = None
+# current_prediction_session = None  # REMOVED: Global state causes race conditions
 
 # Base directories
 BASE_DIR = Path(__file__).parent
@@ -79,8 +79,8 @@ def cleanup_old_files():
             BASE_DIR / 'test.fasta',
             BASE_DIR / 'alleles_mhc1.txt',
             BASE_DIR / 'alleles_mhc2.txt',
-            NETBCE_PREDICTION_DIR / 'test.fasta',
-            NETBCE_RESULT_DIR / 'NetBCE_predictions.tsv'
+            # NETBCE_PREDICTION_DIR / 'test.fasta',  # REMOVED: Don't touch shared directory
+            # NETBCE_RESULT_DIR / 'NetBCE_predictions.tsv' # REMOVED: Don't touch shared directory
         ]
         
         for file_path in files_to_remove:
@@ -114,11 +114,12 @@ def check_prediction_status():
     """Check which prediction files exist"""
     try:
         # First try global variable (for active prediction)
-        global current_prediction_session
-        session_id = current_prediction_session
+        # global current_prediction_session
+        # session_id = current_prediction_session
         
         # Fallback to Flask session
-        if not session_id and 'session_id' in session:
+        session_id = None
+        if 'session_id' in session:
             session_id = session['session_id']
         
         if not session_id:
@@ -202,8 +203,8 @@ def predict():
         session_id = session['session_id']
         
         # Store session ID globally for status checks
-        global current_prediction_session
-        current_prediction_session = session_id
+        # global current_prediction_session
+        # current_prediction_session = session_id
         
         session.permanent = True
         session.modified = True
@@ -212,7 +213,9 @@ def predict():
         
         # Step 1: B-cell Epitope Prediction (NetBCE)
         print("Step 1: Running NetBCE prediction...")
-        netbce_fasta = NETBCE_PREDICTION_DIR / 'test.fasta'
+        # Use session-specific filename in the prediction directory as requested
+        # Using unique filename to avoid race conditions
+        netbce_fasta = NETBCE_PREDICTION_DIR / f"{session_id}.fasta"
         with open(netbce_fasta, 'w') as f:
             f.write(fasta_content)
         
@@ -223,11 +226,14 @@ def predict():
         try:
             # Construct the command to run NetBCE in its dedicated conda environment
             # Using bash with explicit conda activation (avoids ~/.bashrc dependency)
+            # IMPORTANT: Pass absolute paths to avoid CWD confusion and shared file conflicts
+            # -f: Input FASTA (session specific)
+            # -o: Output directory (session specific)
             netbce_cmd = (
                 f'bash -c "source $(conda info --base)/etc/profile.d/conda.sh && '
                 f'conda activate NetBCE && '
                 f'cd {NETBCE_PREDICTION_DIR} && '
-                f'python NetBCE_prediction.py -f test.fasta -o ../result/ && '
+                f'python NetBCE_prediction.py -f {netbce_fasta} -o {session_dir} && '
                 f'conda deactivate"'
             )
             
@@ -240,10 +246,19 @@ def predict():
             )
             
             if result.returncode != 0:
+                # Clean up input file on failure
+                if netbce_fasta.exists():
+                    netbce_fasta.unlink()
                 return jsonify({'success': False, 'error': f'NetBCE prediction failed: {result.stderr}'})
             
+            # Clean up input file
+            if netbce_fasta.exists():
+                netbce_fasta.unlink()
+            
             # Read NetBCE predictions and save to results
-            netbce_output = NETBCE_RESULT_DIR / 'NetBCE_predictions.tsv'
+            # NetBCE now writes directly to session_dir
+            netbce_output = session_dir / 'NetBCE_predictions.tsv'
+            
             if netbce_output.exists():
                 # NetBCE output has no header, columns are: sequence_id, peptide, position, score
                 df_bcell = pd.read_csv(netbce_output, sep='\t', header=None, 
@@ -256,12 +271,12 @@ def predict():
                 df_bcell.to_csv(session_dir / 'B_Cell_Epitopes.csv', index=False)
                 
                 # Clean up NetBCE files
-                if netbce_fasta.exists():
-                    netbce_fasta.unlink()
+                # if netbce_fasta.exists():
+                #     netbce_fasta.unlink() # Keep for debugging/other steps
                 if netbce_output.exists():
                     netbce_output.unlink()
                 # Also clean up the HTML report if it exists
-                report_file = NETBCE_RESULT_DIR / 'report.html'
+                report_file = session_dir / 'report.html'
                 if report_file.exists():
                     report_file.unlink()
             else:
