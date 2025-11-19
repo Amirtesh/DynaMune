@@ -93,6 +93,9 @@ def cleanup_old_files():
 @app.route('/')
 def index():
     """Main page for input"""
+    # Initialize session immediately on page load
+    get_session_dir()
+    session.modified = True
     return render_template('index.html', adjuvants=ADJUVANTS.keys())
 
 
@@ -150,9 +153,9 @@ def check_prediction_status():
         mhc2_size = mhc2_file.stat().st_size if mhc2_exists else 0
         
         status = {
-            'bcell_done': bcell_exists and bcell_size > 100,
-            'mhc1_done': mhc1_exists and mhc1_size > 100,
-            'mhc2_done': mhc2_exists and mhc2_size > 100
+            'bcell_done': bcell_exists and bcell_size > 0,
+            'mhc1_done': mhc1_exists and mhc1_size > 0,
+            'mhc2_done': mhc2_exists and mhc2_size > 0
         }
         
         print(f"Status: bcell={status['bcell_done']}({bcell_size}), mhc1={status['mhc1_done']}({mhc1_size}), mhc2={status['mhc2_done']}({mhc2_size})")
