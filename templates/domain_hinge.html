@@ -97,6 +97,14 @@
                                 <input type="number" class="form-control" id="nModes" value="20" min="1" max="100">
                                 <small class="form-text">Default: 20</small>
                             </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-percentage"></i> Hinge Percentile
+                                </label>
+                                <input type="number" class="form-control" id="hingePercentile" value="10" min="1" max="50" step="1">
+                                <small class="form-text">Lower MSF percentile for hinge detection. Default: 10</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,6 +169,7 @@
             formData.append('residue_range', $('#residueRange').val());
             formData.append('domain_threshold', $('#domainThreshold').val());
             formData.append('n_modes', $('#nModes').val());
+            formData.append('hinge_percentile', $('#hingePercentile').val());
             
             $('#runAnalysisBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Running Analysis...');
             

@@ -171,34 +171,37 @@ def perform_gnm_analysis(structure, calphas, n_modes=20, cutoff=10.0):
     
     return gnm
 
-
 def perform_pca_analysis(ensemble, n_components=20):
-    """Perform PCA on conformational ensemble"""
+    """Perform PCA using ProDy on centered ensemble"""
     print(f"\n{'='*60}")
     print("PERFORMING PCA ANALYSIS")
     print(f"{'='*60}")
     print(f"Number of conformations: {ensemble.numCoordsets()}")
     print(f"Number of atoms: {ensemble.numAtoms()}")
     print(f"Number of components: {n_components}")
-    
+
+    from prody import PCA
+
+    # Apply PCA directly using ProDy
     pca = PCA(ensemble.getTitle() + '_pca')
     pca.buildCovariance(ensemble)
     pca.calcModes(n_modes=n_components)
-    
-    print(f"\nPCA completed successfully")
-    print(f"Calculated {len(pca)} principal components")
-    print(f"First 5 eigenvalues: {pca.getEigvals()[:5].round(3)}")
-    
-    # Calculate variance explained
-    total_variance = np.sum(pca.getEigvals())
-    variance_explained = (pca.getEigvals() / total_variance) * 100
+
+    # Extract variance
+    eigvals = pca.getEigvals()
+    total_variance = eigvals.sum()
+    variance_explained = eigvals / total_variance * 100
     cumulative_variance = np.cumsum(variance_explained)
-    
+
+    print(f"\nPCA completed successfully")
+    print(f"First 5 eigenvalues: {eigvals[:5].round(3)}")
+
     print(f"\nVariance explained by first 5 PCs:")
     for i in range(min(5, len(variance_explained))):
         print(f"  PC{i+1}: {variance_explained[i]:.2f}% (cumulative: {cumulative_variance[i]:.2f}%)")
-    
+
     return pca, variance_explained, cumulative_variance
+
 
 
 def calculate_mode_overlap(model1, model2, n_modes=None):
@@ -1276,166 +1279,156 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic NMA
-  python3 prody_nma_pca_combined.py complex.pdb
-
-  # NMA with PCA on generated ensemble
-  python3 prody_nma_pca_combined.py complex.pdb --method ANM --ensemble-pca
-
-  # Full analysis with all features
-  python3 prody_nma_pca_combined.py complex.pdb --method ANM --conformers 20 --ensemble-pca --allosteric --clustenmd
+  python3 prody_nma.py protein.pdb
+  python3 prody_nma.py protein.pdb --method ANM --nmodes 20 --conformers 20
+  python3 prody_nma.py protein.pdb --method ANM --ensemble-pca --allosteric --cutoff 18 --gamma 0.5
         """)
-    
+
+    # Core inputs
     parser.add_argument('pdb_file', help='Input PDB file')
-    parser.add_argument('--method', choices=['ANM', 'GNM'], default='ANM',
-                       help='NMA method (default: ANM)')
-    parser.add_argument('--cutoff', type=float, default=None,
-                       help='Cutoff distance in Å (default: 15.0 for ANM, 10.0 for GNM)')
-    parser.add_argument('--nmodes', type=int, default=20,
-                       help='Number of modes to calculate (default: 20)')
-    parser.add_argument('--selection', default='calpha',
-                       help='Atom selection (default: calpha)')
-    parser.add_argument('--conformers', type=int, default=10,
-                       help='Number of conformers to generate (default: 10)')
-    parser.add_argument('--interface-cutoff', type=float, default=10.0,
-                       help='Interface distance cutoff in Å (default: 10.0)')
-    parser.add_argument('--ensemble-pca', action='store_true',
-                       help='Perform PCA on generated conformer ensemble')
-    parser.add_argument('--allosteric', action='store_true',
-                       help='Perform allosteric pathway analysis')
-    parser.add_argument('--clustenmd', action='store_true',
-                       help='Perform ClustENMD-style analysis on ensemble')
-    
+    parser.add_argument('--method', choices=['ANM', 'GNM'], default='ANM')
+    parser.add_argument('--nmodes', type=int, default=20)
+    parser.add_argument('--selection', default='calpha')
+    parser.add_argument('--conformers', type=int, default=10)
+    parser.add_argument('--interface-cutoff', type=float, default=10.0)
+    parser.add_argument('--ensemble-pca', action='store_true')
+    parser.add_argument('--allosteric', action='store_true')
+    parser.add_argument('--clustenmd', action='store_true')
+    parser.add_argument('--cutoff', type=float, default=None)
+    parser.add_argument('--gamma', type=float, default=1.0)
+
     args = parser.parse_args()
-    
+
+    # Validate PDB file
     if not os.path.exists(args.pdb_file):
         print(f"Error: File '{args.pdb_file}' not found!")
         sys.exit(1)
-    
-    if args.cutoff is None:
-        cutoff = 15.0 if args.method == 'ANM' else 10.0
-    else:
-        cutoff = args.cutoff
-    
+
+    # Resolve cutoff
+    cutoff = args.cutoff if args.cutoff is not None else (15.0 if args.method == 'ANM' else 10.0)
+    gamma = args.gamma
+
     print(f"\n{'='*60}")
     print("Enhanced ProDy NMA with Ensemble PCA Analysis")
     print(f"{'='*60}")
-    
-    # Standard NMA workflow
-    print(f"Mode: {args.method} Normal Mode Analysis")
-    print(f"Input file: {args.pdb_file}")
-    
+    print(f"Input File: {args.pdb_file}")
+    print(f"NMA Method: {args.method}")
+    print(f"Cutoff: {cutoff} Å | Gamma: {gamma}")
+    print(f"Modes: {args.nmodes} | Conformers: {args.conformers}")
+    print(f"Selection: {args.selection}")
+    print(f"Ensemble PCA: {args.ensemble_pca} | Allosteric: {args.allosteric} | ClustENMD: {args.clustenmd}")
+    print(f"{'='*60}")
+
     # Load structure
     structure = parsePDB(args.pdb_file)
     calphas = structure.select(args.selection)
-    
     if calphas is None or calphas.numAtoms() == 0:
         print(f"Error: No atoms found with selection '{args.selection}'!")
         sys.exit(1)
-    
-    # Setup output directory
+
+    coords = calphas.getCoords()
+
     pdb_name = os.path.splitext(os.path.basename(args.pdb_file))[0]
     output_dir = setup_output_directory(pdb_name)
-    
-    # Analyze chain structure
+
     residue_indices, chain_info, chains, resnums, resnames = analyze_chain_structure(calphas)
     print_chain_summary(chain_info)
-    
-    # Identify interface residues
+
     interface_residues, interface_pairs = identify_interface_residues(
         calphas, chain_info, args.interface_cutoff)
-    
-    # Perform NMA
+
+    # NMA computation
     if args.method == 'ANM':
-        model = perform_anm_analysis(structure, calphas, args.nmodes, cutoff)
+        model = ANM('anm_model')
+        model.buildHessian(coords, cutoff=cutoff, gamma=gamma)
     else:
-        model = perform_gnm_analysis(structure, calphas, args.nmodes, cutoff)
-    
-    # Calculate fluctuations
+        model = GNM('gnm_model')
+        model.buildKirchhoff(coords, cutoff=cutoff)
+
+    model.calcModes(n_modes=args.nmodes)
+
+    # Fluctuation and plot generation
     msf, bfactors = calculate_bfactors(model, calphas)
-    
-    # Generate NMA plots (using the detailed functions)
     plot_comprehensive_analysis(model, calphas, msf, bfactors, output_dir,
-                               args.method, residue_indices, chain_info, 
-                               interface_residues)
-    
-    plot_mode_shapes(model, calphas, output_dir, args.method, 
-                    residue_indices, chain_info)
-    
-    # Compare with experimental B-factors
+                                args.method, residue_indices, chain_info, interface_residues)
+    plot_mode_shapes(model, calphas, output_dir, args.method, residue_indices, chain_info)
     compare_with_experimental_bfactors(calphas, bfactors, output_dir)
-    
-    # Interface dynamics analysis
-    analyze_interface_dynamics(msf, interface_residues, interface_pairs, 
-                               chain_info, output_dir)
-    
+    analyze_interface_dynamics(msf, interface_residues, interface_pairs, chain_info, output_dir)
+
     # Allosteric pathway analysis
-    if args.allosteric and args.method == 'ANM':
-        analyze_allosteric_pathways(model, interface_residues, chain_info, output_dir)
-    elif args.allosteric and args.method == 'GNM':
-            print("\nNote: Allosteric pathway analysis (cross-correlation) is only available for ANM.")
-        
-    # Save output files
-    save_output_files(model, calphas, msf, bfactors, output_dir, args.method,
-                     residue_indices, chains, resnames, resnums, interface_residues)
-    
-    # Generate conformers (ANM only)
-    ensemble = None
-    if args.method == 'ANM':
-        ensemble = generate_conformers(model, calphas, output_dir, args.method, 
-                                      args.conformers)
-    
+    if args.allosteric:
+        if args.method != 'ANM':
+            print("\nWARNING: Allosteric analysis only available for ANM. Skipping.")
+        else:
+            analyze_allosteric_pathways(model, interface_residues, chain_info, output_dir)
+
+    # Generate conformers
+    ensemble = generate_conformers(model, calphas, output_dir, args.method, args.conformers) \
+               if args.method == 'ANM' else None
+
     # Ensemble PCA analysis
     if args.ensemble_pca and ensemble is not None:
-        print(f"\n{'='*60}")
-        print("ENSEMBLE PCA ANALYSIS")
-        print(f"{'='*60}")
-            
-        # Perform PCA on generated ensemble
-        pca, variance_explained, cumulative_variance = perform_pca_analysis(
-            ensemble, args.nmodes)
-        
-        # Generate PCA plots
-        plot_pca_analysis(pca, ensemble, variance_explained, cumulative_variance,
-                         output_dir, residue_indices, chain_info)
-        
-        # Compare ANM and PCA
-        plot_nma_pca_comparison(model, pca, output_dir, residue_indices, chain_info)
-        
-        # ClustENMD analysis
-        if args.clustenmd:
-            perform_clustenmd_analysis(ensemble, model, output_dir)
-    elif args.ensemble_pca and ensemble is None:
-        print("\nNote: --ensemble-pca requested but no ensemble was generated (e.g., if using GNM).")
+        print(f"\n{'=' * 60}")
+        print("ENSEMBLE PCA ANALYSIS (CENTERED)")
+        print(f"{'=' * 60}")
 
-    
-    # Print summary
-    print_summary(model, calphas, msf, bfactors, args.method, chain_info, 
-                 interface_residues)
-    
+        import numpy as np
+        from prody import Ensemble, PCA
+
+        # Convert to NumPy coordinates
+        ensemble_coords = np.array([conf.getCoords() for conf in ensemble])
+
+        # Center the ensemble
+        ensemble_coords_centered = ensemble_coords - ensemble_coords.mean(axis=0)
+
+        # Rebuild as ProDy ensemble
+        centered_ensemble = Ensemble('centered_ensemble')
+        centered_ensemble.setCoords(ensemble_coords_centered[0])
+        for coords in ensemble_coords_centered:
+            centered_ensemble.addCoordset(coords)
+
+        # Perform PCA using ProDy
+        pca, variance_explained, cumulative_variance = perform_pca_analysis(
+            centered_ensemble, args.nmodes
+        )
+
+        # PCA visualization and comparison
+        plot_pca_analysis(
+            pca, centered_ensemble, variance_explained, cumulative_variance,
+            output_dir, residue_indices, chain_info
+        )
+        plot_nma_pca_comparison(
+            model, pca, output_dir, residue_indices, chain_info
+        )
+
+        # ClustENMD
+        if args.clustenmd:
+            perform_clustenmd_analysis(centered_ensemble, model, output_dir)
+
+    # Final summary
+    print_summary(model, calphas, msf, bfactors, args.method, chain_info, interface_residues)
+
     print(f"\n{'='*60}")
-    print(f"ANALYSIS COMPLETE")
+    print("ANALYSIS COMPLETE")
     print(f"{'='*60}")
-    print(f"All results saved to: {output_dir}/")
+    print(f"Results saved to: {output_dir}/")
     print(f"\nKey output files:")
-    print(f"  - comprehensive_analysis.png: Main NMA/PCA analysis figure")
-    print(f"  - 01_square_fluctuations.png: Detailed MSF plot")
-    print(f"  - square_fluctuations.txt: Numerical MSF data")
-    print(f"  - eigenvalues.txt: Mode eigenvalues and collectivity")
-    print(f"  - mode_shapes_combined.png: Plot of first 10 mode shapes")
-    print(f"  - mode_01_shape.png (etc): Individual plots for all modes")
+    print(f"  - comprehensive_analysis.png")
+    print(f"  - 01_square_fluctuations.png")
+    print(f"  - eigenvalues.txt")
+    print(f"  - mode_shapes_combined.png")
     if args.ensemble_pca and ensemble is not None:
-        print(f"  - pca_comprehensive_analysis.png: PCA-specific analysis")
-        print(f"  - anm_pca_comparison.png: ANM vs PCA comparison")
-        print(f"  - anm_pca_overlap.txt: Mode overlap analysis")
-    if args.clustenmd and (args.ensemble_pca and ensemble is not None):
-        print(f"  - clustenmd_analysis.png: Conformational clustering")
-        print(f"  - cluster_assignments.txt: Cluster membership")
+        print(f"  - pca_comprehensive_analysis.png")
+        print(f"  - anm_pca_comparison.png")
+    if args.clustenmd and args.ensemble_pca and ensemble is not None:
+        print(f"  - clustenmd_analysis.png")
     if interface_residues:
-        print(f"  - interface_analysis.txt: Interface dynamics report")
+        print(f"  - interface_analysis.txt")
     if args.allosteric:
-        print(f"  - allosteric_pathways.txt: Allosteric communication pathways")
+        print(f"  - allosteric_pathways.txt")
     print(f"\n{'='*60}\n")
+
+
 
 
 if __name__ == '__main__':

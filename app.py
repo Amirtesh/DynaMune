@@ -1025,6 +1025,7 @@ def run_prody_nma():
         data = request.get_json()
         method = data.get('method', 'ANM')
         cutoff = data.get('cutoff', 10.0)  # Default changed to 10.0
+        gamma = data.get('gamma', 1.0)  # Default gamma value
         n_modes = data.get('n_modes', 20)
         conformers = data.get('conformers', 10)
         interface_cutoff = data.get('interface_cutoff', 10.0)  # New parameter
@@ -1041,6 +1042,14 @@ def run_prody_nma():
                 return jsonify({'success': False, 'error': 'Cutoff distance must be between 5.0 and 30.0 Å'})
         except ValueError:
             return jsonify({'success': False, 'error': 'Invalid cutoff value'})
+        
+        # Validate gamma
+        try:
+            gamma = float(gamma)
+            if gamma < 0.1 or gamma > 10.0:
+                return jsonify({'success': False, 'error': 'Gamma must be between 0.1 and 10.0'})
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid gamma value'})
         
         # Validate interface_cutoff
         try:
@@ -1075,7 +1084,7 @@ def run_prody_nma():
         # Build command with required flags
         cmd = ['python3', str(BASE_DIR / 'prody_nma.py'), str(pdb_file), 
                '--method', method, '--nmodes', str(n_modes), '--conformers', str(conformers),
-               '--cutoff', str(cutoff), '--interface-cutoff', str(interface_cutoff),
+               '--cutoff', str(cutoff), '--gamma', str(gamma), '--interface-cutoff', str(interface_cutoff),
                '--ensemble-pca', '--allosteric', '--clustenmd']  # Always include these 3 flags
         
         # Run ProDy NMA analysis with output in session directory
@@ -1236,6 +1245,7 @@ def run_standalone_nma():
         pdb_path = data.get('pdb_path', '')
         method = data.get('method', 'ANM')
         cutoff = data.get('cutoff')
+        gamma = data.get('gamma', 1.0)  # Default gamma value
         n_modes = data.get('n_modes', 20)
         conformers = data.get('conformers', 10)
         interface_cutoff = data.get('interface_cutoff', 10.0)
@@ -1257,6 +1267,14 @@ def run_standalone_nma():
                 return jsonify({'success': False, 'error': 'Cutoff distance must be between 5.0 and 30.0 Å'})
         except ValueError:
             return jsonify({'success': False, 'error': 'Invalid cutoff value'})
+        
+        # Validate gamma
+        try:
+            gamma = float(gamma)
+            if gamma < 0.1 or gamma > 10.0:
+                return jsonify({'success': False, 'error': 'Gamma must be between 0.1 and 10.0'})
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid gamma value'})
         
         # Validate interface_cutoff
         try:
@@ -1286,7 +1304,7 @@ def run_standalone_nma():
         # Build command - always include ensemble-pca, allosteric, and clustenmd flags
         cmd = ['python3', str(BASE_DIR / 'prody_nma.py'), pdb_path, 
                '--method', method, '--nmodes', str(n_modes), '--conformers', str(conformers),
-               '--cutoff', str(cutoff), '--interface-cutoff', str(interface_cutoff),
+               '--cutoff', str(cutoff), '--gamma', str(gamma), '--interface-cutoff', str(interface_cutoff),
                '--ensemble-pca', '--allosteric', '--clustenmd']
         
         # Run ProDy NMA analysis
@@ -2038,6 +2056,8 @@ def run_domain_hinge():
         residue_range = request.form.get('residue_range', '').strip()
         domain_threshold = float(request.form.get('domain_threshold', 0.25))
         n_modes = int(request.form.get('n_modes', 20))
+        hinge_percentile = float(request.form.get('hinge_percentile', 10))
+        hinge_percentile = float(request.form.get('hinge_percentile', 10))
         
         # Get session directory
         session_dir = get_session_dir()
@@ -2058,7 +2078,8 @@ def run_domain_hinge():
         cmd = ['python3', str(script_path),
                '--pdb', str(pdb_path),
                '--domain-threshold', str(domain_threshold),
-               '--nmodes', str(n_modes)]
+               '--nmodes', str(n_modes),
+               '--hinge-percentile', str(hinge_percentile)]
         
         if chains:
             cmd.extend(['--chain', chains])

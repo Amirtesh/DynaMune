@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-# version1.0
+# version 2.0 - Fixed hinge visualization and domain detection
 """
-ProDy Domain Detection and Hinge Analysis Script
+ProDy Domain Detection and Hinge Analysis Script - FIXED VERSION
 
-This script identifies protein domains based on correlated dynamics and
-detects hinge regions that facilitate domain movements.
+Key improvements:
+- Better default threshold (0.4) for more reasonable domain counts
+- Fixed hinge marker visualization (now clearly visible)
+- Improved plot formatting and readability
+- Better handling of single-chain structures
+- Fixed line continuity issues
 
 Usage:
-  # Whole structure (default)
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb
-
-  # Specific chain (e.g., multi-chain antigen)
+  # Basic usage with improved defaults
   python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A
 
-  # Specific residue range
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --residue-range 1-300
+  # Adjust domain granularity (lower = fewer domains)
+  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --domain-threshold 0.35
 
-  # Custom domain threshold
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --domain-threshold 0.6
+  # More sensitive hinge detection
+  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --hinge-percentile 15
 """
 
 import sys
@@ -160,13 +161,13 @@ def calculate_cross_correlations(anm, n_modes=20):
     return cross_corr
 
 
-def identify_domains_from_correlations(cross_corr, threshold=0.6, method='average'):
+def identify_domains_from_correlations(cross_corr, threshold=0.4, method='average'):
     """
     Identify domains using hierarchical clustering on cross-correlations
     
     Parameters:
     - cross_corr: Cross-correlation matrix
-    - threshold: Correlation threshold for domain separation (default: 0.6)
+    - threshold: Correlation threshold for domain separation (default: 0.4)
     - method: Linkage method for hierarchical clustering
     """
     print(f"\nIdentifying domains (threshold: {threshold})...")
@@ -189,6 +190,11 @@ def identify_domains_from_correlations(cross_corr, threshold=0.6, method='averag
     
     n_domains = len(np.unique(clusters))
     print(f"Found {n_domains} domains")
+    
+    # Warn if too many domains
+    if n_domains > 10:
+        print(f"WARNING: {n_domains} domains detected. Consider increasing --domain-threshold")
+        print(f"         Current threshold: {threshold}, try 0.35 or 0.3 for fewer domains")
     
     return clusters, linkage_matrix, n_domains
 
@@ -215,7 +221,11 @@ def identify_hinge_residues(cross_corr, clusters, atoms, percentile=10):
         diff_domain = clusters != domain_i
         
         # Calculate average correlation with same domain (excluding self)
-        same_domain_corr = np.mean(np.abs(cross_corr[i, same_domain & (np.arange(n_residues) != i)]))
+        same_domain_mask = same_domain & (np.arange(n_residues) != i)
+        if np.any(same_domain_mask):
+            same_domain_corr = np.mean(np.abs(cross_corr[i, same_domain_mask]))
+        else:
+            same_domain_corr = 1.0  # Only one residue in domain
         
         # Calculate average correlation with different domains
         if np.any(diff_domain):
@@ -231,7 +241,7 @@ def identify_hinge_residues(cross_corr, clusters, atoms, percentile=10):
     hinge_threshold = np.percentile(hinge_scores, 100 - percentile)
     hinge_residues = np.where(hinge_scores >= hinge_threshold)[0]
     
-    print(f"Identified {len(hinge_residues)} potential hinge residues")
+    print(f"Identified {len(hinge_residues)} potential hinge residues (top {percentile}%)")
     
     return hinge_scores, hinge_residues
 
@@ -294,8 +304,10 @@ def plot_domain_assignment(clusters, atoms, output_dir):
     n_domains = len(np.unique(clusters))
     
     # Create color map for domains
-    colors = plt.cm.tab10(np.linspace(0, 1, n_domains))
-    domain_colors = [colors[c-1] for c in clusters]
+    colors = plt.cm.tab10(np.linspace(0, 1, min(n_domains, 10)))
+    if n_domains > 10:
+        colors = plt.cm.tab20(np.linspace(0, 1, min(n_domains, 20)))
+    domain_colors = [colors[(c-1) % len(colors)] for c in clusters]
     
     fig, ax = plt.subplots(figsize=(14, 4))
     
@@ -307,13 +319,14 @@ def plot_domain_assignment(clusters, atoms, output_dir):
     ax.set_ylim([0, 1.5])
     ax.set_yticks([])
     
-    # Add domain labels
-    for domain_id in np.unique(clusters):
-        domain_residues = np.where(clusters == domain_id)[0]
-        center = np.mean(resnums[domain_residues])
-        ax.text(center, 0.5, f'D{domain_id}', ha='center', va='center', 
-               fontsize=14, fontweight='bold', color='white',
-               bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
+    # Add domain labels (only for reasonable number of domains)
+    if n_domains <= 15:
+        for domain_id in np.unique(clusters):
+            domain_residues = np.where(clusters == domain_id)[0]
+            center = np.mean(resnums[domain_residues])
+            ax.text(center, 0.5, f'D{domain_id}', ha='center', va='center', 
+                   fontsize=14, fontweight='bold', color='white',
+                   bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
     
     plt.tight_layout()
     plt.savefig(f'{output_dir}/domain_assignment.png', dpi=300, bbox_inches='tight')
@@ -322,58 +335,79 @@ def plot_domain_assignment(clusters, atoms, output_dir):
 
 
 def plot_hinge_analysis(hinge_scores, hinge_residues, stiffness, clusters, atoms, output_dir, residue_indices, chain_info):
-    """Plot hinge analysis results"""
+    """Plot hinge analysis results - FIXED VERSION"""
     print("\nGenerating hinge analysis plots...")
     
     resnums = atoms.getResnums()
+    n_domains = len(np.unique(clusters))
     
-    fig, axes = plt.subplots(3, 1, figsize=(14, 12))
+    fig, axes = plt.subplots(3, 1, figsize=(16, 14))
     
-    # Plot 1: Hinge scores
-    axes[0].plot(residue_indices, hinge_scores, color='steelblue', linewidth=2, zorder=2)
-    axes[0].scatter(residue_indices[hinge_residues], hinge_scores[hinge_residues], 
-                   color='red', s=50, zorder=5, label='Potential Hinges')
-    axes[0].set_xlabel('Residue Index', fontsize=11, fontweight='bold')
-    axes[0].set_ylabel('Hinge Score', fontsize=11, fontweight='bold')
+    # Plot 1: Hinge scores with PROMINENT markers
+    axes[0].plot(residue_indices, hinge_scores, color='steelblue', linewidth=2.5, zorder=2)
+    # FIXED: Make hinge markers much more visible
+    if len(hinge_residues) > 0:
+        axes[0].scatter(residue_indices[hinge_residues], hinge_scores[hinge_residues], 
+                       color='red', s=120, zorder=10, label='Potential Hinges',
+                       marker='o', edgecolors='darkred', linewidths=2)
+    axes[0].set_xlabel('Residue Index', fontsize=12, fontweight='bold')
+    axes[0].set_ylabel('Hinge Score', fontsize=12, fontweight='bold')
     axes[0].set_title('Hinge Score (Inter-domain / Intra-domain Correlation)', 
-                     fontsize=12, fontweight='bold')
-    axes[0].legend()
+                     fontsize=13, fontweight='bold')
+    axes[0].legend(fontsize=11, loc='upper right')
     axes[0].grid(alpha=0.3, zorder=1)
     add_chain_boundaries(axes[0], chain_info, y_fraction=0.92)
     
-    # Plot 2: Mechanical stiffness
-    axes[1].plot(residue_indices, stiffness, color='darkgreen', linewidth=2, zorder=2)
-    axes[1].scatter(residue_indices[hinge_residues], stiffness[hinge_residues], 
-                   color='red', s=50, zorder=5, label='Potential Hinges')
-    axes[1].set_xlabel('Residue Index', fontsize=11, fontweight='bold')
-    axes[1].set_ylabel('Mechanical Stiffness', fontsize=11, fontweight='bold')
-    axes[1].set_title('Mechanical Stiffness (Normalized)', fontsize=12, fontweight='bold')
-    axes[1].legend()
+    # Plot 2: Mechanical stiffness with PROMINENT markers
+    axes[1].plot(residue_indices, stiffness, color='darkgreen', linewidth=2.5, zorder=2)
+    if len(hinge_residues) > 0:
+        axes[1].scatter(residue_indices[hinge_residues], stiffness[hinge_residues], 
+                       color='red', s=120, zorder=10, label='Potential Hinges',
+                       marker='o', edgecolors='darkred', linewidths=2)
+    axes[1].set_xlabel('Residue Index', fontsize=12, fontweight='bold')
+    axes[1].set_ylabel('Mechanical Stiffness', fontsize=12, fontweight='bold')
+    axes[1].set_title('Mechanical Stiffness (Normalized)', fontsize=13, fontweight='bold')
+    axes[1].legend(fontsize=11, loc='upper right')
     axes[1].grid(alpha=0.3, zorder=1)
     add_chain_boundaries(axes[1], chain_info, y_fraction=0.92)
     
-    # Plot 3: Combined view with domains
-    n_domains = len(np.unique(clusters))
-    colors = plt.cm.tab10(np.linspace(0, 1, n_domains))
+    # Plot 3: SIMPLIFIED Combined view - only show domains and hinges
+    # Use distinct colors for domains (limit to reasonable number)
+    if n_domains <= 10:
+        colors = plt.cm.tab10(np.linspace(0, 1, n_domains))
+    else:
+        colors = plt.cm.tab20(np.linspace(0, 1, min(n_domains, 20)))
     
+    # Show domain blocks
     for domain_id in np.unique(clusters):
         domain_mask = clusters == domain_id
-        axes[2].fill_between(residue_indices, 0, 1, where=domain_mask, 
-                           alpha=0.3, color=colors[domain_id-1], 
-                           label=f'Domain {domain_id}')
+        color_idx = (domain_id - 1) % len(colors)
+        axes[2].fill_between(residue_indices, 0, 0.3, where=domain_mask, 
+                           alpha=0.4, color=colors[color_idx], 
+                           label=f'Domain {domain_id}' if n_domains <= 10 else None,
+                           zorder=1)
     
     # Normalize hinge scores for visualization
     norm_hinge = (hinge_scores - hinge_scores.min()) / (hinge_scores.max() - hinge_scores.min())
-    axes[2].plot(residue_indices, norm_hinge, color='black', linewidth=2, label='Hinge Score', zorder=2)
-    axes[2].scatter(residue_indices[hinge_residues], norm_hinge[hinge_residues], 
-                   color='red', s=100, zorder=5, marker='^', label='Hinges')
+    axes[2].plot(residue_indices, norm_hinge * 0.7 + 0.3, color='black', 
+                linewidth=2.5, label='Hinge Score', zorder=2)
     
-    axes[2].set_xlabel('Residue Index', fontsize=11, fontweight='bold')
-    axes[2].set_ylabel('Normalized Score', fontsize=11, fontweight='bold')
-    axes[2].set_title('Domains and Hinge Regions', fontsize=12, fontweight='bold')
-    axes[2].legend(loc='upper right', ncol=2)
-    axes[2].set_ylim([0, 1.2])
-    add_chain_boundaries(axes[2], chain_info, y_fraction=1.15)
+    # FIXED: Make hinge markers MUCH more prominent
+    if len(hinge_residues) > 0:
+        axes[2].scatter(residue_indices[hinge_residues], 
+                       norm_hinge[hinge_residues] * 0.7 + 0.3, 
+                       color='red', s=200, zorder=15, marker='^', 
+                       label='Identified Hinges', edgecolors='darkred', linewidths=2.5)
+    
+    axes[2].set_xlabel('Residue Index', fontsize=12, fontweight='bold')
+    axes[2].set_ylabel('Normalized Score / Domain', fontsize=12, fontweight='bold')
+    axes[2].set_title('Domains and Hinge Regions', fontsize=13, fontweight='bold')
+    if n_domains <= 10:
+        axes[2].legend(loc='upper left', ncol=2, fontsize=9)
+    else:
+        axes[2].legend(['Hinge Score', 'Identified Hinges'], loc='upper left', fontsize=10)
+    axes[2].set_ylim([0, 1.1])
+    add_chain_boundaries(axes[2], chain_info, y_fraction=1.05)
     
     plt.tight_layout()
     plt.savefig(f'{output_dir}/hinge_analysis.png', dpi=300, bbox_inches='tight')
@@ -465,6 +499,7 @@ def save_results_to_file(clusters, hinge_scores, hinge_residues, stiffness,
 def save_pymol_script(clusters, hinge_residues, atoms, output_dir):
     """Generate PyMOL script to visualize domains and hinges"""
     resnums = atoms.getResnums()
+    chains = atoms.getChids()
     n_domains = len(np.unique(clusters))
     
     with open(f'{output_dir}/visualize_domains.pml', 'w') as f:
@@ -472,21 +507,45 @@ def save_pymol_script(clusters, hinge_residues, atoms, output_dir):
         f.write("# Color domains\n")
         
         colors = ['red', 'green', 'blue', 'yellow', 'magenta', 'cyan', 
-                 'orange', 'purple', 'lime', 'pink']
+                 'orange', 'purple', 'lime', 'pink', 'salmon', 'wheat',
+                 'lightblue', 'palegreen', 'violet', 'gold']
         
         for domain_id in np.unique(clusters):
             domain_residues = np.where(clusters == domain_id)[0]
-            residue_list = '+'.join([str(resnums[i]) for i in domain_residues])
-            color = colors[(domain_id - 1) % len(colors)]
-            f.write(f"select domain_{domain_id}, resi {residue_list}\n")
-            f.write(f"color {color}, domain_{domain_id}\n")
+            # Group by chain for proper selection
+            chain_selections = {}
+            for idx in domain_residues:
+                chain = chains[idx]
+                resnum = resnums[idx]
+                if chain not in chain_selections:
+                    chain_selections[chain] = []
+                chain_selections[chain].append(str(resnum))
+            
+            # Create selection for each chain
+            for chain, res_list in chain_selections.items():
+                residue_list = '+'.join(res_list)
+                color = colors[(domain_id - 1) % len(colors)]
+                f.write(f"select domain_{domain_id}_chain{chain}, chain {chain} and resi {residue_list}\n")
+                f.write(f"color {color}, domain_{domain_id}_chain{chain}\n")
         
         f.write("\n# Highlight hinge residues\n")
-        hinge_list = '+'.join([str(resnums[i]) for i in hinge_residues])
-        f.write(f"select hinges, resi {hinge_list}\n")
-        f.write("show spheres, hinges\n")
-        f.write("color white, hinges\n")
-        f.write("set sphere_scale, 0.5, hinges\n")
+        if len(hinge_residues) > 0:
+            chain_selections = {}
+            for idx in hinge_residues:
+                chain = chains[idx]
+                resnum = resnums[idx]
+                if chain not in chain_selections:
+                    chain_selections[chain] = []
+                chain_selections[chain].append(str(resnum))
+            
+            for chain, res_list in chain_selections.items():
+                hinge_list = '+'.join(res_list)
+                f.write(f"select hinges_chain{chain}, chain {chain} and resi {hinge_list}\n")
+            
+            f.write("select hinges, hinges_chain*\n")
+            f.write("show spheres, hinges\n")
+            f.write("color white, hinges\n")
+            f.write("set sphere_scale, 0.6, hinges\n")
         
         f.write("\n# Display settings\n")
         f.write("hide everything\n")
@@ -494,27 +553,28 @@ def save_pymol_script(clusters, hinge_residues, atoms, output_dir):
         f.write("set cartoon_fancy_helices, 1\n")
         f.write("set ray_shadows, 0\n")
         f.write("bg_color white\n")
+        f.write("zoom\n")
     
     print(f"Saved: {output_dir}/visualize_domains.pml")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='ProDy Domain Detection and Hinge Analysis',
+        description='ProDy Domain Detection and Hinge Analysis - FIXED VERSION',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Whole structure (default)
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb
-
-  # Specific chain (for multi-chain antigens)
+  # Basic usage with improved defaults
   python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A
 
-  # Specific residue range
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --residue-range 1-300
+  # Fewer domains (increase threshold)
+  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --domain-threshold 0.35
 
-  # Custom domain threshold (higher = fewer domains)
-  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --domain-threshold 0.7
+  # More sensitive hinge detection
+  python3 prody_domain_hinge_analysis.py --pdb structure.pdb --chain A --hinge-percentile 15
+
+  # Full structure analysis
+  python3 prody_domain_hinge_analysis.py --pdb structure.pdb
         """)
     
     parser.add_argument('--pdb', required=True, help='Input PDB file')
@@ -524,13 +584,13 @@ Examples:
     parser.add_argument('--selection', type=str, default=None,
                        help='Custom ProDy selection string (overrides other options)')
     parser.add_argument('--cutoff', type=float, default=15.0, 
-                       help='ANM cutoff distance in Å (default: 15.0)')
+                       help='ANM cutoff distance in Ã… (default: 15.0)')
     parser.add_argument('--nmodes', type=int, default=20, 
                        help='Number of modes for analysis (default: 20)')
-    parser.add_argument('--domain-threshold', type=float, default=0.6,
-                       help='Correlation threshold for domain separation (default: 0.6, range: 0-1)')
+    parser.add_argument('--domain-threshold', type=float, default=0.4,
+                       help='Correlation threshold for domain separation (default: 0.4, lower=fewer domains)')
     parser.add_argument('--hinge-percentile', type=float, default=10,
-                       help='Percentile for hinge identification (default: 10)')
+                       help='Percentile for hinge identification (default: 10, higher=more hinges)')
     
     args = parser.parse_args()
     
@@ -572,7 +632,7 @@ Examples:
     print(f"Residue range in selection: {resnums[0]} to {resnums[-1]}")
     
     # Build ANM
-    print(f"\nBuilding ANM with {args.nmodes} modes (cutoff: {args.cutoff} Å)...")
+    print(f"\nBuilding ANM with {args.nmodes} modes (cutoff: {args.cutoff} Ã…)...")
     anm = ANM(pdb_name)
     anm.buildHessian(atoms, cutoff=args.cutoff)
     anm.calcModes(n_modes=args.nmodes)
@@ -614,7 +674,7 @@ Examples:
     for idx in sorted_hinges[:10]:
         resnum = resnums[idx]
         resname = resnames[idx]
-        print(f"  {resname}{resnum}: hinge score = {hinge_scores[idx]:.4f}")
+        print(f"  {resname}{resnum}: hinge score = {hinge_scores[idx]:.4f}, stiffness = {stiffness[idx]:.4f}")
     
     if len(hinge_residues) > 10:
         print(f"  ... and {len(hinge_residues)-10} more (see output file)")
@@ -634,6 +694,14 @@ Examples:
     print("\nDomain and hinge analysis complete.")
     print(f"All results saved to: {output_dir}/")
     print(f"\nTo visualize in PyMOL, run: pymol {args.pdb} {output_dir}/visualize_domains.pml")
+    
+    # Print recommendations
+    if n_domains > 10:
+        print(f"\nRECOMMENDATION: Too many domains detected ({n_domains}).")
+        print(f"Try running with --domain-threshold 0.35 or 0.3 for fewer, larger domains")
+    if len(hinge_residues) < 5:
+        print(f"\nRECOMMENDATION: Very few hinges detected ({len(hinge_residues)}).")
+        print(f"Try running with --hinge-percentile 15 or 20 for more hinge detection")
 
 
 if __name__ == '__main__':
