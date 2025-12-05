@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Use Cases & Scientific Validation - DynaMune</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        .use-case-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        
+        .tool-card {
+            border-left: 4px solid #667eea;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tool-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .validation-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .badge-input { background: #e3f2fd; color: #1976d2; }
+        .badge-output { background: #f3e5f5; color: #7b1fa2; }
+        .badge-validation { background: #e8f5e9; color: #388e3c; }
+        
+        .comparison-table {
+            font-size: 0.9rem;
+        }
+        
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .comparison-table td {
+            vertical-align: top;
+            padding: 15px;
+        }
+        
+        .decision-tree {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        
+        .quick-selector {
+            background: #e3f2fd;
+            padding: 25px;
+            border-left: 4px solid #1976d2;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-selector h3 {
+            color: #1976d2;
+            margin-bottom: 20px;
+        }
+        
+        .quick-selector ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .quick-selector li {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .quick-selector li i {
+            color: #1976d2;
+            margin-right: 10px;
+        }
+        
+        .citation-box {
+            background: #fff3e0;
+            padding: 20px;
+            border-left: 4px solid #f57c00;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .example-data-box {
+            background: #e8f5e9;
+            padding: 20px;
+            border-left: 4px solid #388e3c;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .faq-section {
+            margin-top: 40px;
+        }
+        
+        .faq-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-item:hover {
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .faq-question {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .faq-answer {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        details {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            padding: 10px;
+            user-select: none;
+        }
+        
+        summary:hover {
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        
+        details[open] summary {
+            margin-bottom: 15px;
+        }
+        
+        .tree-node {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #667eea;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .tree-child {
+            margin-left: 30px;
+            border-left: 2px dashed #ddd;
+            padding-left: 20px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .formula {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .example-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .limitation-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="use-case-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="mb-2"><i class="fas fa-book-open"></i> DynaMune Use Cases & Scientific Validation</h1>
+                    <p class="lead mb-0">Comprehensive Guide to Protein Dynamics Analysis Tools</p>
+                </div>
+                <a href="/" class="btn btn-light btn-lg">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        
+        <!-- Quick Tool Selector -->
+        <div class="quick-selector">
+            <h3><i class="fas fa-compass"></i> Quick Tool Selector</h3>
+            <p style="color: #333; margin-bottom: 15px; font-weight: 500;">Not sure which tool to use? Here's a quick reference guide:</p>
+            <ul>
+                <li style="color: #222;"><i class="fas fa-wave-square"></i> <strong>Intrinsic motions?</strong> → ProDy NMA (ANM/GNM)</li>
+                <li style="color: #222;"><i class="fas fa-expand-arrows-alt"></i> <strong>Domain movements?</strong> → Domain-Hinge Analysis</li>
+                <li style="color: #222;"><i class="fas fa-circle-notch"></i> <strong>Binding pocket flexibility?</strong> → Pocket Dynamics</li>
+                <li style="color: #222;"><i class="fas fa-project-diagram"></i> <strong>Allosteric pathways?</strong> → PRS Analysis</li>
+                <li style="color: #222;"><i class="fas fa-exchange-alt"></i> <strong>Apo vs Holo comparison?</strong> → ANM Comparison</li>
+                <li style="color: #222;"><i class="fas fa-link"></i> <strong>Ligand binding effects?</strong> → Deformation Analysis</li>
+                <li style="color: #222;"><i class="fas fa-handshake"></i> <strong>Interface stability?</strong> → Contact Stability & Timeline</li>
+                <li style="color: #222;"><i class="fas fa-layer-group"></i> <strong>Interface flexibility?</strong> → Interface Dynamics</li>
+            </ul>
+        </div>
+        
+        <!-- Example Datasets -->
+        <div class="example-data-box">
+            <h3><i class="fas fa-download"></i> Try DynaMune with Example Datasets</h3>
+            <p style="color: #1b5e20; margin-bottom: 20px; font-weight: 500;">Use these curated benchmark systems to quickly explore DynaMune's core capabilities. Each dataset highlights a different mechanistic regime and corresponds directly to the validation analyses presented in the paper.</p>
+            
+            <div style="margin-bottom: 25px;">
+                <h5 style="color: #2e7d32; font-weight: 600;"><i class="fas fa-dna"></i> 1. Adenylate Kinase (AdK): Classical Domain Rearrangement Model</h5>
+                <p style="color: #222; margin-bottom: 10px;">Adenylate kinase provides the gold-standard test for large-scale conformational transitions.</p>
+                <p style="color: #222; margin-bottom: 8px;"><strong>PDB IDs:</strong></p>
+                <ul style="color: #222; margin-bottom: 12px;">
+                    <li><strong>4AKE</strong> — Open state (apo)</li>
+                    <li><strong>1AKE</strong> — Closed state (ligand-bound)</li>
+                </ul>
+                <p style="color: #222; margin-bottom: 8px;"><strong>Why this system?</strong></p>
+                <ul style="color: #222; margin-bottom: 12px;">
+                    <li>Benchmark for domain–hinge identification</li>
+                    <li>Demonstrates CORE–LID–NMP mechanics</li>
+                    <li>Validates deformation mapping and mode repurposing</li>
+                </ul>
+                <p style="color: #1565c0; font-weight: 600; margin-bottom: 5px;"><i class="fas fa-tools"></i> Best DynaMune Modules to Try:</p>
+                <ul style="color: #333;">
+                    <li>Normal Mode & PCA</li>
+                    <li>Domain Decomposition & Hinge Detection</li>
+                    <li>Deformation Mapping</li>
+                    <li>Comparative NMA (apo → complex)</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h5 style="color: #2e7d32; font-weight: 600;"><i class="fas fa-viruses"></i> 2. ACE2–Spike Complex: Protein–Protein Interface Benchmark</h5>
+                <p style="color: #222; margin-bottom: 10px;">Human ACE2 bound to the SARS-CoV-2 Spike RBD represents a constrained but biologically critical interface.</p>
+                <p style="color: #222; margin-bottom: 8px;"><strong>PDB ID:</strong> 6M0J</p>
+                <p style="color: #222; margin-bottom: 8px;"><strong>Why this system?</strong></p>
+                <ul style="color: #222; margin-bottom: 12px;">
+                    <li>Tests interface contact stability</li>
+                    <li>Demonstrates persistent hotspots (Lys353-centered triad)</li>
+                    <li>Validates multimode deformation of ACE2 upon Spike engagement</li>
+                    <li>Ideal for contact timeline and comparative NMA</li>
+                </ul>
+                <p style="color: #1565c0; font-weight: 600; margin-bottom: 5px;"><i class="fas fa-tools"></i> Best DynaMune Modules to Try:</p>
+                <ul style="color: #333;">
+                    <li>Interface Contact Stability & Persistence</li>
+                    <li>Conformational Deformation Mapping</li>
+                    <li>ANM Comparison (apo ACE2 → Spike-bound ACE2)</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h5 style="color: #2e7d32; font-weight: 600;"><i class="fas fa-robot"></i> 3. AlphaFold Demonstration Case (User-Provided or Recommended Test Protein)</h5>
+                <p style="color: #222; margin-bottom: 10px;">Use an AlphaFold-predicted structure to explore how DynaMune handles predicted models.</p>
+                <p style="color: #222; margin-bottom: 8px;"><strong>Recommended example:</strong> AlphaFold-predicted ACE2 (AF-Q9BYF1) or any user-selected AF2 model</p>
+                <p style="color: #222; margin-bottom: 8px;"><strong>Why this system?</strong></p>
+                <ul style="color: #222; margin-bottom: 12px;">
+                    <li>Demonstrates handling of pLDDT confidence variation</li>
+                    <li>Allows comparison of predicted vs experimental dynamics</li>
+                    <li>Highlights how low-confidence loops behave in ENM/NMA</li>
+                </ul>
+                <p style="color: #1565c0; font-weight: 600; margin-bottom: 5px;"><i class="fas fa-tools"></i> Best DynaMune Modules to Try:</p>
+                <ul style="color: #333;">
+                    <li>ANM/GNM Fluctuations</li>
+                    <li>B-factor Comparison (if experimental structure exists)</li>
+                    <li>Pocket Dynamics / Accessibility</li>
+                    <li>Conformer Generation (ensemble behavior of predicted models)</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 20px; color: #333; padding: 12px; background: #fff9c4; border-left: 4px solid #fbc02d; border-radius: 5px;">
+                <i class="fas fa-info-circle"></i> <strong>Tip:</strong> Download structures directly from <a href="https://www.rcsb.org/" target="_blank" style="color: #1976d2; font-weight: 600;">RCSB PDB</a> (experimental structures) or <a href="https://alphafold.ebi.ac.uk/" target="_blank" style="color: #1976d2; font-weight: 600;">AlphaFold DB</a> (predicted structures).
+            </p>
+        </div>
+        
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-4" id="useCaseTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                    <i class="fas fa-list"></i> Overview Table
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="detailed-tab" data-bs-toggle="tab" data-bs-target="#detailed" type="button">
+                    <i class="fas fa-microscope"></i> Detailed Analysis
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="workflow-tab" data-bs-toggle="tab" data-bs-target="#workflow" type="button">
+                    <i class="fas fa-project-diagram"></i> Decision Workflow
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation" type="button">
+                    <i class="fas fa-check-circle"></i> Validation Guide
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="faq-tab" data-bs-toggle="tab" data-bs-target="#faq" type="button">
+                    <i class="fas fa-question-circle"></i> FAQ
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="useCaseTabContent">
+            
+            <!-- Overview Table Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="card main-card">
+                    <h3><i class="fas fa-table"></i> Quick Reference: All 9 Analysis Tools</h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table comparison-table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 18%;">Tool</th>
+                                    <th style="width: 22%;">Biological Question</th>
+                                    <th style="width: 15%;">Input Type</th>
+                                    <th style="width: 28%;">Key Outputs</th>
+                                    <th style="width: 17%;">Validation Strategy</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- NMA -->
+                                <tr>
+                                    <td><strong>ProDy NMA</strong><br>(ANM/GNM + PCA)</td>
+                                    <td>What are the dominant intrinsic protein motions? How do predicted dynamics align with functional states?</td>
+                                    <td>Single PDB (apo or predicted)</td>
+                                    <td>
+                                        • Eigenvalues & eigenvectors (modes 1-20)<br>
+                                        • Per-residue RMSF<br>
+                                        • Theoretical B-factors<br>
+                                        • Mode cross-correlation matrix<br>
+                                        • PCA projections (PC1 vs PC2)<br>
+                                        • Conformer ensemble (50-100 structures)
+                                    </td>
+                                    <td>Compare theoretical B-factors with crystallographic B-factors (R² > 0.4-0.6 expected). Match predicted RMSF peaks with known functional loops.</td>
+                                </tr>
+                                
+                                <!-- Domain Hinge -->
+                                <tr>
+                                    <td><strong>Domain-Hinge Analysis</strong></td>
+                                    <td>Where are hinge regions that facilitate domain movements? How do domains correlate dynamically?</td>
+                                    <td>Single PDB (multi-domain protein)</td>
+                                    <td>
+                                        • Domain assignment (residue clusters)<br>
+                                        • Hinge residue list with stiffness scores<br>
+                                        • Cross-correlation heatmap (NxN matrix)<br>
+                                        • Domain mobility visualization<br>
+                                        • Dendrogram showing hierarchy
+                                    </td>
+                                    <td>Match predicted hinge residues with crystallographic B-factors or HDX-MS data showing high exchange at hinges.</td>
+                                </tr>
+                                
+                                <!-- Pocket Dynamics -->
+                                <tr>
+                                    <td><strong>Pocket Dynamics</strong></td>
+                                    <td>Does the binding pocket show breathing motions? How accessible is the pocket across conformational ensemble?</td>
+                                    <td>PDB with pocket region specified (or auto-detected)</td>
+                                    <td>
+                                        • Per-residue RMSF within pocket<br>
+                                        • Pocket volume timeseries (min/max/mean)<br>
+                                        • Pocket radius changes<br>
+                                        • Accessibility score<br>
+                                        • Pocket flexibility heatmap<br>
+                                        • Volume distribution plot
+                                    </td>
+                                    <td>Compare pocket RMSF with multiple crystal structures (apo, holo, inhibitor-bound). Predicted breathing should match B-factor differences.</td>
+                                </tr>
+                                
+                                <!-- PRS -->
+                                <tr>
+                                    <td><strong>PRS Analysis</strong></td>
+                                    <td>Which residues act as allosteric sensors/effectors? Where are hub residues with dual roles?</td>
+                                    <td>Single PDB (native or apo)</td>
+                                    <td>
+                                        • Effectiveness matrix (residue i → all j)<br>
+                                        • Sensitivity matrix (total response per residue)<br>
+                                        • Hub residues (dual high E+S)<br>
+                                        • PRS heatmap<br>
+                                        • Allosteric pathway network<br>
+                                        • Top 20 ranking (sensors and effectors)
+                                    </td>
+                                    <td>Cross-validate predicted hub residues with published allosteric mutation studies. Compare PRS pathways with biochemical crosslinking or NMR titration data.</td>
+                                </tr>
+                                
+                                <!-- ANM Comparison -->
+                                <tr>
+                                    <td><strong>ANM Comparison</strong><br>(Apo vs Holo)</td>
+                                    <td>How does ligand/partner binding alter intrinsic dynamics? Which modes are preserved vs disrupted?</td>
+                                    <td>Two PDBs: apo (reference) + holo/complex (target)</td>
+                                    <td>
+                                        • Mode overlap matrix (apo modes i vs holo modes j)<br>
+                                        • ΔRMSF per residue (holo - apo)<br>
+                                        • Best-match mode indices<br>
+                                        • Overlap heatmap<br>
+                                        • Summary statistics (% modes conserved)<br>
+                                        • Overlap diagonal plot
+                                    </td>
+                                    <td>Validate mode softening/stiffening against literature on binding-induced allostery. Cross-check ΔRMSF trends with HDX-MS differences.</td>
+                                </tr>
+                                
+                                <!-- Deformation -->
+                                <tr>
+                                    <td><strong>Deformation Analysis</strong></td>
+                                    <td>Which structural differences between two states can be mechanistically explained by intrinsic normal modes?</td>
+                                    <td>Two PDBs: reference (unbound) + target (bound)</td>
+                                    <td>
+                                        • Deformation vector (target - reference)<br>
+                                        • Mode projections (overlap of each mode)<br>
+                                        • Cumulative variance plot (% explained)<br>
+                                        • Bar plot (per-mode contribution)<br>
+                                        • Correlation coefficients<br>
+                                        • RMSD of projected vs actual deformation
+                                    </td>
+                                    <td>Validate that cumulative variance >70% by N=10-15 modes indicates conformational change is "accessible" via ANM.</td>
+                                </tr>
+                                
+                                <!-- Contact Stability -->
+                                <tr>
+                                    <td><strong>Contact Stability</strong></td>
+                                    <td>How stable are residue-residue interactions at interfaces or within protein core?</td>
+                                    <td>Multi-chain PDB (complex) or single-chain with inter-residue interactions</td>
+                                    <td>
+                                        • Contact matrix (residue pair i-j distance)<br>
+                                        • H-bond list (donor-acceptor, geometry)<br>
+                                        • Salt bridge list (residue pair + distance)<br>
+                                        • Aromatic interaction pairs (π-π, T-shaped)<br>
+                                        • Hydrophobic clusters<br>
+                                        • SASA per residue (buried vs exposed)<br>
+                                        • Heatmaps (contact density, interaction types)
+                                    </td>
+                                    <td>Validate predicted interface contacts against alanine scanning mutagenesis data. Compare H-bond patterns with X-ray validation. Cross-check salt bridges with pH-dependent binding studies.</td>
+                                </tr>
+                                
+                                <!-- Contact Timeline -->
+                                <tr>
+                                    <td><strong>Contact Timeline</strong><br>(Inter-Chain)</td>
+                                    <td>Which protein-protein interface residues maintain contact across conformational ensemble? Are contacts stable or transient?</td>
+                                    <td>Multi-chain complex PDB (e.g., antibody-antigen, enzyme-substrate)</td>
+                                    <td>
+                                        • Contact persistence matrix (residue pair: % of conformers with contact)<br>
+                                        • Timeline heatmap (residue pairs vs conformer index)<br>
+                                        • Contact pair list with persistence scores<br>
+                                        • Contact network graph (stable vs transient edges)<br>
+                                        • Entropy timeseries (contact diversity)<br>
+                                        • Interaction persistence histogram
+                                    </td>
+                                    <td>Validate that persistent contacts (>80% presence) correlate with mutagenesis data. Compare transient contacts with known regulatory or inducible residues.</td>
+                                </tr>
+                                
+                                <!-- Interface Dynamics -->
+                                <tr>
+                                    <td><strong>Interface Dynamics</strong><br>(NMA-derived)</td>
+                                    <td>Are protein-protein interface residues more rigid or flexible than bulk protein? Does interface rigidity correlate with binding affinity?</td>
+                                    <td>Single or multi-chain complex</td>
+                                    <td>
+                                        • Per-residue RMSF (interface vs non-interface)<br>
+                                        • Interface flexibility score (mean RMSF at interface)<br>
+                                        • Flexibility ratio (interface / bulk)<br>
+                                        • Interface residue list with B-factors<br>
+                                        • Spatial heatmap of interface flexibility
+                                    </td>
+                                    <td>Interface residues typically show moderate flexibility. Compare interface flexibility with known high-affinity vs weak-affinity complexes.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Analysis Tab -->
+            <div class="tab-pane fade" id="detailed" role="tabpanel">
+                <div class="card main-card mb-4">
+                    <h3><i class="fas fa-microscope"></i> Detailed Tool Descriptions</h3>
+                    <p class="text-muted">In-depth scientific background, computational methods, and biological interpretation for each analysis tool. Click to expand any tool for detailed information.</p>
+                </div>
+                
+                <!-- Tool 1: ProDy NMA -->
+                <details>
+                    <summary><strong><i class="fas fa-wave-square"></i> ProDy NMA (ANM/GNM + PCA)</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-wave-square"></i> 1. ProDy NMA (ANM/GNM + PCA Ensemble)</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Proteins are not static entities. They constantly undergo low-frequency collective motions essential for biological function—from antibody domain breathing to ion channel gating. These motions define the conformational landscape accessible without breaking chemical bonds.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Global Motions:</strong> What are the lowest-frequency (most energetically accessible) modes of motion?</li>
+                            <li><strong>Flexibility Regions:</strong> Which regions are flexible vs rigid? RMSF identifies flexible loops and hinges.</li>
+                            <li><strong>Fast Predictions:</strong> Can I predict flexibility without expensive MD simulations?</li>
+                            <li><strong>Experimental Validation:</strong> How do predicted dynamics compare to experimental B-factors?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Single PDB file (apo or predicted)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: RMSF, B-factors, modes, PCA, ensemble</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: R² > 0.4-0.6 with experimental B-factors</div>
+                        
+                        <h5 class="mt-4"><i class="fas fa-calculator"></i> Computational Method</h5>
+                        
+                        <div class="formula">
+                            <strong>Step 1: Hessian Construction</strong><br>
+                            H<sub>ij</sub> = -γ (for i≠j within cutoff), H<sub>ii</sub> = -Σ<sub>j≠i</sub> H<sub>ij</sub><br>
+                            <small>Elastic network: Cα atoms connected by springs within cutoff distance (default 15Å for ANM)</small>
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Step 2: Eigendecomposition</strong><br>
+                            H v<sub>k</sub> = λ<sub>k</sub> v<sub>k</sub><br>
+                            <small>• Eigenvalues (λ): Frequency-squared (low λ = global motion)<br>
+                            • Eigenvectors (v): Direction and magnitude of motion per residue</small>
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Step 3: Fluctuation Analysis</strong><br>
+                            ⟨Δr<sub>i</sub>²⟩ = (3k<sub>B</sub>T/γ) Σ<sub>k</sub> (v<sub>ik</sub>²/λ<sub>k</sub>)<br>
+                            B-factor<sub>i</sub> = (8π²/3) ⟨Δr<sub>i</sub>²⟩<br>
+                            <small>Normalized to match crystallographic B-factor scale</small>
+                        </div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Antibody Fab Region</h6>
+                            <p><strong>Prediction:</strong> ANM predicts high flexibility in CDR loops and hinge regions</p>
+                            <p><strong>Validation:</strong> Compare B-factors with crystal structures in different conformations; RMSF should identify CDR breathing</p>
+                            <p><strong>Literature:</strong> Antibodies show 10–15 Å domain rotations (Fab vs Fc) perfectly captured by ANM modes 1–3</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations & Caveats</h6>
+                            <ul class="mb-0">
+                                <li><strong>Harmonic Approximation:</strong> Assumes small oscillations; large changes (>5 Å RMSD) may violate this</li>
+                                <li><strong>No Solvent:</strong> Protein treated as isolated; water effects ignored</li>
+                                <li><strong>Uniform Springs:</strong> Real proteins have variable force constants (e.g., disulfide bonds stiffer)</li>
+                                <li><strong>Apo State Only:</strong> Prediction for unbound state; use anm_comparison.py for bound states</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 2: Domain-Hinge -->
+                <details>
+                    <summary><strong><i class="fas fa-object-group"></i> Domain-Hinge Analysis</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-object-group"></i> 2. Domain-Hinge Analysis</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Multi-domain proteins operate by rotating domains relative to each other. These rotations are mediated by flexible hinge regions—often just 2–4 residues—that act as mechanical joints. Identifying hinges is critical for understanding conformational switching in signaling and allostery.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Domain Detection:</strong> Does my protein have distinct structural domains?</li>
+                            <li><strong>Hinge Identification:</strong> Where are the hinge/linker regions?</li>
+                            <li><strong>Mechanical Properties:</strong> How flexible are hinges vs domains?</li>
+                            <li><strong>Regulatory Sites:</strong> Do predicted hinges align with known phosphorylation or mutation hotspots?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Single PDB (single chain or multi-domain)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Domains, hinges, correlation matrix, stiffness</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Match with literature domain boundaries & B-factors</div>
+                        
+                        <div class="formula">
+                            <strong>Cross-Correlation Matrix</strong><br>
+                            C<sub>ij</sub> = ⟨Δr<sub>i</sub> · Δr<sub>j</sub>⟩ / √(⟨Δr<sub>i</sub>²⟩⟨Δr<sub>j</sub>²⟩)<br>
+                            <small>• High C<sub>ij</sub>: residues move together (same domain)<br>
+                            • Low C<sub>ij</sub>: residues move independently (separated by hinge)</small>
+                        </div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Immunoglobulin Antibody</h6>
+                            <p><strong>Prediction:</strong> ANM detects Fab (antigen-binding) and Fc (crystallizable) domains; identifies hinge region around residues 110–130</p>
+                            <p><strong>Validation:</strong> Literature shows antibody domain rotation by 15–30°; predicted hinge stiffness ranks lower than domain cores</p>
+                            <p><strong>Reference:</strong> Chen et al. (2014) showed ANM hinges match cryo-EM hinge positions in antibody-antigen complexes</p>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 3: Pocket Dynamics -->
+                <details>
+                    <summary><strong><i class="fas fa-circle-notch"></i> Pocket Dynamics</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-cube"></i> 3. Pocket Dynamics Analysis</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Enzyme active sites and receptor binding pockets undergo continuous "breathing" motions that control substrate access, binding orientation, and product release. A pocket that's too rigid may have poor catalysis; one that's too flexible may suffer from non-specific binding.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Accessibility:</strong> Is the binding pocket accessible to substrates?</li>
+                            <li><strong>Residue Flexibility:</strong> Which pocket residues are flexible vs rigid?</li>
+                            <li><strong>Geometry Changes:</strong> Does pocket geometry change predictably?</li>
+                            <li><strong>Mutation Effects:</strong> Can I predict effects of mutations on substrate binding?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: PDB with pocket region specified</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Volume, RMSF, accessibility, breathing patterns</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Compare with multiple crystal structures</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: HIV Protease</h6>
+                            <p><strong>Prediction:</strong> Central pocket shows symmetrical breathing (homodimer); flap regions highly flexible</p>
+                            <p><strong>Validation:</strong> Crystal structures with different inhibitors show pocket shape variation; resistant mutants disrupt predicted volume changes</p>
+                            <p><strong>Reference:</strong> Noe & Fischer (2008) showed HIV protease pocket dynamics predict drug resistance</p>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 4: PRS Analysis -->
+                <details>
+                    <summary><strong><i class="fas fa-project-diagram"></i> PRS Analysis (Perturbation Response Scanning)</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-network-wired"></i> 4. Perturbation Response Scanning (PRS)</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Allosteric regulation—where binding at one site affects function at a distant site—drives most cellular signaling. The molecular basis is dynamic: proteins communicate through elastic deformations and correlated motions. PRS maps these communication pathways.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Communication Hubs:</strong> Which residues are allosteric communication hubs?</li>
+                            <li><strong>Pathways:</strong> What are the allosteric pathways in my protein?</li>
+                            <li><strong>Mutation Sites:</strong> Where should I mutate to disrupt allosteric signaling?</li>
+                            <li><strong>Validation:</strong> Are predicted sites consistent with known regulatory mutations?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Single PDB (native/functional state)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Effectiveness, sensitivity, hubs, pathways</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Cross-check with mutation studies & NMR data</div>
+                        
+                        <div class="formula">
+                            <strong>PRS Calculation</strong><br>
+                            Response<sub>j</sub> = (H<sup>-1</sup> F<sub>i</sub>)<sub>j</sub><br>
+                            Effectiveness<sub>i</sub> = Σ<sub>j</sub> |Response<sub>j</sub>|<br>
+                            Sensitivity<sub>j</sub> = Σ<sub>i</sub> |Response<sub>j</sub>|<br>
+                            Hub = High Effectiveness + High Sensitivity
+                        </div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Phosphofructokinase (PFK)</h6>
+                            <p><strong>Prediction:</strong> PRS identifies residues connecting allosteric effector site (ATP/AMP binding) to active site</p>
+                            <p><strong>Validation:</strong> Predicted hub residues overlap with known allosteric sites</p>
+                            <p><strong>Reference:</strong> Gerek & Ozkan (2011) showed PRS predicts PFK allosteric pathways with 80% accuracy compared to NMR</p>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 5: ANM Comparison -->
+                <details>
+                    <summary><strong><i class="fas fa-exchange-alt"></i> ANM Comparison (Apo vs Holo)</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-exchange-alt"></i> 5. ANM Comparison (Apo vs Holo)</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Ligand or partner binding often changes protein dynamics, inducing conformational selection or shifts in dominant motions. ANM Comparison quantifies how binding alters the intrinsic mode landscape.</p>
+                        
+                        <h5><i class="fas fa-calculator"></i> Computational Method</h5>
+                        <p><strong>Mode Overlap Calculation:</strong></p>
+                        <div class="formula">
+                            Overlap(i,j) = |u_apo(i) · u_holo(j)|<br>
+                            where u_apo(i) and u_holo(j) are eigenvectors of apo and holo structures
+                        </div>
+                        <p>High overlap (>0.7) indicates conserved modes; low overlap (<0.3) shows binding-induced dynamics shift.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Mode Conservation:</strong> Which intrinsic motions are preserved upon binding?</li>
+                            <li><strong>Allostery:</strong> Does binding rigidify or mobilize specific regions?</li>
+                            <li><strong>Mechanism:</strong> Is it induced-fit (low overlap) or conformational selection (high overlap)?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Two PDBs (apo + holo)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Mode overlap matrix, ΔRMSF, overlap heatmap</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: HDX-MS binding differences</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Kinases</h6>
+                            <p><strong>Prediction:</strong> Inactive kinases (DFG-out) show <30% mode overlap with active (DFG-in) state</p>
+                            <p><strong>Literature:</strong> Activation loop phosphorylation dramatically reshapes low-frequency modes</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations</h6>
+                            <ul class="mb-0">
+                                <li>Requires aligned structures with identical residue numbering</li>
+                                <li>Cannot distinguish between induced-fit and conformational selection without kinetic data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 6: Deformation Analysis -->
+                <details>
+                    <summary><strong><i class="fas fa-link"></i> Deformation Analysis</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-link"></i> 6. Deformation Analysis</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Tests whether the conformational change between two states (e.g., open→closed) can be mechanistically explained by the protein's intrinsic normal modes. High cumulative variance (>70%) indicates the transition is "encoded" in the structure.</p>
+                        
+                        <h5><i class="fas fa-calculator"></i> Computational Method</h5>
+                        <p><strong>Deformation Vector Projection:</strong></p>
+                        <div class="formula">
+                            d = (r_target - r_reference)<br>
+                            Overlap(i) = (u_i · d) / |d|<br>
+                            Cumulative Variance = Σ(Overlap(i))²
+                        </div>
+                        <p>Modes with high overlap (>0.5) contribute most to the observed conformational change.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Accessibility:</strong> Is the observed conformational change mechanistically accessible?</li>
+                            <li><strong>Mode Contribution:</strong> Which modes drive the transition?</li>
+                            <li><strong>Energetics:</strong> Low-frequency modes suggest low energetic cost</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Two PDBs (reference + target)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Mode projections, cumulative variance, overlap plot</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: >70% variance by N=10-15 modes</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Adenylate Kinase</h6>
+                            <p><strong>Prediction:</strong> Open→closed transition (4AKE→1AKE) explained by modes 1-3 (>85% variance)</p>
+                            <p><strong>Literature:</strong> Classic benchmark for NMA - ANM perfectly predicts hinge closure</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations</h6>
+                            <ul class="mb-0">
+                                <li>Requires significant conformational difference (RMSD >2 Å) for meaningful analysis</li>
+                                <li>Low cumulative variance may indicate crystal packing artifacts or multi-step transitions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 7: Contact Stability -->
+                <details>
+                    <summary><strong><i class="fas fa-handshake"></i> Contact Stability</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-handshake"></i> 7. Contact Stability Analysis</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Analyzes non-covalent interactions (H-bonds, salt bridges, aromatic stacking) that stabilize protein structure or protein-protein interfaces. Critical for understanding binding affinity and mutation effects.</p>
+                        
+                        <h5><i class="fas fa-calculator"></i> Computational Method</h5>
+                        <p><strong>Geometric Criteria:</strong></p>
+                        <div class="formula">
+                            H-bond: D-H···A angle >120°, distance <3.5 Å<br>
+                            Salt bridge: Charged pairs <4.0 Å<br>
+                            Aromatic: π-π stacking <5.0 Å, angle <30°<br>
+                            SASA: Solvent-accessible surface area (rolling sphere)
+                        </div>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Interface Hot Spots:</strong> Which residues contribute most to binding energy?</li>
+                            <li><strong>Mutation Effects:</strong> Will mutation break critical H-bonds?</li>
+                            <li><strong>Stability:</strong> Core residues buried or exposed?</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: PDB (complex or single-chain)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: H-bond list, salt bridges, SASA, contact matrix</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Alanine scanning mutagenesis</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Antibody-Antigen</h6>
+                            <p><strong>Prediction:</strong> CDR loops form 8-12 H-bonds with antigen epitope; Arg/Asp salt bridges critical</p>
+                            <p><strong>Literature:</strong> Alanine mutations at predicted H-bond donors reduce affinity 10-100×</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations</h6>
+                            <ul class="mb-0">
+                                <li>Static analysis - doesn't capture transient or dynamic contacts</li>
+                                <li>Sensitive to coordinate precision (avoid low-resolution structures)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 8: Contact Timeline -->
+                <details>
+                    <summary><strong><i class="fas fa-timeline"></i> Contact Timeline (Inter-Chain)</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-timeline"></i> 8. Contact Timeline (Inter-Chain)</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Tracks interface contacts across the NMA-generated conformational ensemble to distinguish stable (>80% persistence) from transient (<50% persistence) interactions. Essential for understanding binding mechanisms.</p>
+                        
+                        <h5><i class="fas fa-calculator"></i> Computational Method</h5>
+                        <p><strong>Persistence Calculation:</strong></p>
+                        <div class="formula">
+                            Persistence(i,j) = (N_contact / N_total) × 100%<br>
+                            where N_contact = # conformers with i-j contact <4.0 Å
+                        </div>
+                        <p>Persistent contacts (>80%) stabilize interface; transient contacts (<30%) may be regulatory.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Stability:</strong> Which interface residues are always in contact vs sometimes?</li>
+                            <li><strong>Dynamics:</strong> Does binding interface "breathe" or remain rigid?</li>
+                            <li><strong>Hot Spots:</strong> Persistent contacts correlate with experimental ΔΔG</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Multi-chain complex PDB</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: Persistence matrix, timeline heatmap, contact network</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Mutagenesis correlation</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Protease-Inhibitor</h6>
+                            <p><strong>Prediction:</strong> Catalytic site contacts 100% persistent; flap region contacts 40-60% (breathing)</p>
+                            <p><strong>Literature:</strong> Inhibitor redesign stabilized transient contacts → 10× affinity improvement</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations</h6>
+                            <ul class="mb-0">
+                                <li>Ensemble size (50-100 conformers) affects statistics - larger ensembles more robust</li>
+                                <li>Cannot detect rare conformational states (<5% population)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+                <!-- Tool 9: Interface Dynamics -->
+                <details>
+                    <summary><strong><i class="fas fa-layer-group"></i> Interface Dynamics (NMA-derived)</strong> - Click to expand</summary>
+                <div class="card tool-card" style="border: none; box-shadow: none;">
+                    <div class="card-body">
+                        <h4 class="tool-title"><i class="fas fa-layer-group"></i> 9. Interface Dynamics (NMA-derived)</h4>
+                        
+                        <h5><i class="fas fa-flask"></i> Biological Context</h5>
+                        <p>Compares flexibility of interface residues vs bulk protein to understand binding energetics. Rigid interfaces (low RMSF) indicate pre-organized binding; flexible interfaces suggest induced-fit mechanisms.</p>
+                        
+                        <h5><i class="fas fa-calculator"></i> Computational Method</h5>
+                        <p><strong>Flexibility Ratio:</strong></p>
+                        <div class="formula">
+                            Flexibility Ratio = RMSF_interface / RMSF_bulk<br>
+                            Interface residues: within 5 Å of partner chain<br>
+                            Bulk residues: >10 Å from interface
+                        </div>
+                        <p>Ratio <1.0 indicates rigid interface; >1.0 indicates flexible interface.</p>
+                        
+                        <h5><i class="fas fa-question-circle"></i> What Questions Does It Answer?</h5>
+                        <ul>
+                            <li><strong>Binding Mechanism:</strong> Pre-organized (rigid) vs induced-fit (flexible)?</li>
+                            <li><strong>Affinity Prediction:</strong> Rigid interfaces often correlate with high affinity</li>
+                            <li><strong>Hotspot Identification:</strong> Rigid residues within flexible interface are key anchors</li>
+                        </ul>
+                        
+                        <div class="validation-badge badge-input"><i class="fas fa-file"></i> Input: Complex PDB (single or multi-chain)</div>
+                        <div class="validation-badge badge-output"><i class="fas fa-chart-line"></i> Outputs: RMSF profile, flexibility ratio, interface heatmap</div>
+                        <div class="validation-badge badge-validation"><i class="fas fa-check"></i> Validation: Compare high vs low affinity complexes</div>
+                        
+                        <div class="example-box">
+                            <h6><i class="fas fa-lightbulb"></i> Example: Antibody Maturation</h6>
+                            <p><strong>Prediction:</strong> Germline antibody (low affinity) has flexible CDRs (ratio 1.5); matured (high affinity) rigid CDRs (ratio 0.7)</p>
+                            <p><strong>Literature:</strong> Somatic hypermutation rigidifies CDR loops, pre-organizing for antigen binding</p>
+                        </div>
+                        
+                        <div class="limitation-box">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Limitations</h6>
+                            <ul class="mb-0">
+                                <li>Interface definition sensitive to distance cutoff (test 4-6 Å range)</li>
+                                <li>Doesn't account for entropy-enthalpy compensation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                </details>
+                
+            </div>
+            
+            <!-- Decision Workflow Tab -->
+            <div class="tab-pane fade" id="workflow" role="tabpanel">
+                <div class="card main-card">
+                    <h3><i class="fas fa-project-diagram"></i> Decision Tree: Which Tool Should I Use?</h3>
+                    <p class="text-muted">Follow this workflow to select the appropriate analysis tool for your research question</p>
+                    
+                    <div class="decision-tree">
+                        <div class="tree-node">
+                            <h5><i class="fas fa-play-circle"></i> START: You have a protein PDB file</h5>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q1: Want to understand global conformational flexibility?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Use prody_nma.py</strong>
+                                    <ul class="mt-2">
+                                        <li>Output: RMSF, B-factors, mode profiles</li>
+                                        <li>Next: Compare B-factors with experimental data</li>
+                                        <li>Next: Examine modes 1-5 for large-scale motions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q2: Is your protein multi-domain?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Use domain_hinge_analysis.py</strong>
+                                    <ul class="mt-2">
+                                        <li>Output: Domain map, hinge residues</li>
+                                        <li>Next: Do predicted hinges match literature?</li>
+                                        <li>Next: Are hinges sites of regulatory mutations?</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q3: Want to study a binding/catalytic pocket?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Use pocket_dynamics.py</strong>
+                                    <ul class="mt-2">
+                                        <li>Output: Pocket volume, accessibility, flexibility</li>
+                                        <li>Next: Does volume match substrate size?</li>
+                                        <li>Next: Compare with multiple crystal forms</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q4: Want to identify allosteric sites/hubs?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Use prs_analysis.py</strong>
+                                    <ul class="mt-2">
+                                        <li>Output: Hub residues, allosteric pathways</li>
+                                        <li>Next: Do hubs overlap with known regulatory sites?</li>
+                                        <li>Next: Design allosteric inhibitor at predicted hub</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q5: Have two structural states (e.g., apo + holo)?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Two Options:</strong>
+                                    <div class="mt-2 ms-3">
+                                        <p><strong>Option A: Compare mode changes</strong><br>
+                                        → <strong>Use anm_comparison.py</strong><br>
+                                        Output: Mode overlap, ΔRMSF<br>
+                                        Interpretation: Which modes change upon binding?</p>
+                                        
+                                        <p><strong>Option B: Check if transition is "natural"</strong><br>
+                                        → <strong>Use deformation_analysis.py</strong><br>
+                                        Output: Cumulative variance (% explained by ANM)<br>
+                                        Interpretation: Is transition energetically accessible?</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-child">
+                            <div class="tree-node">
+                                <strong><i class="fas fa-question"></i> Q6: Want to study protein-protein interface stability?</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">YES</span> → <strong>Two Options:</strong>
+                                    <div class="mt-2 ms-3">
+                                        <p><strong>Option A: Interaction types (H-bonds, salt bridges)</strong><br>
+                                        → <strong>Use prody_contact_stability.py</strong><br>
+                                        Output: Contact matrix, interaction types</p>
+                                        
+                                        <p><strong>Option B: Persistence across conformations</strong><br>
+                                        → <strong>Use contact_timeline.py</strong><br>
+                                        Output: Persistence scores, stable vs transient contacts</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-node mt-4" style="background: #d4edda; border-color: #28a745;">
+                            <h5><i class="fas fa-check-circle"></i> END: Run all relevant tools; cross-validate results</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Validation Guide Tab -->
+            <div class="tab-pane fade" id="validation" role="tabpanel">
+                <div class="card main-card">
+                    <h3><i class="fas fa-check-circle"></i> Validation Strategies & Best Practices</h3>
+                    
+                    <h4 class="mt-4"><i class="fas fa-clipboard-check"></i> General Validation Principles</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-flask"></i> Experimental Data Comparison</h5>
+                                    <ul>
+                                        <li><strong>X-ray Crystallography:</strong> B-factors, multiple conformations</li>
+                                        <li><strong>NMR:</strong> Chemical shift perturbations, ensemble structures</li>
+                                        <li><strong>Cryo-EM:</strong> Conformational heterogeneity, flexibility</li>
+                                        <li><strong>HDX-MS:</strong> Deuterium exchange rates, flexible regions</li>
+                                        <li><strong>SAXS:</strong> Kratky plots, radius of gyration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-dna"></i> Functional Data Comparison</h5>
+                                    <ul>
+                                        <li><strong>Mutagenesis:</strong> Alanine scanning, site-directed</li>
+                                        <li><strong>Binding Assays:</strong> SPR, ITC, fluorescence</li>
+                                        <li><strong>Enzyme Kinetics:</strong> k<sub>cat</sub>, K<sub>M</sub>, allosteric effects</li>
+                                        <li><strong>Cross-linking:</strong> Chemical crosslinks, disulfide bonds</li>
+                                        <li><strong>FRET:</strong> Distance changes, conformational states</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mt-4"><i class="fas fa-star"></i> Expected Correlation Benchmarks</h4>
+                    
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Comparison</th>
+                                <th>Expected Correlation (R² or r)</th>
+                                <th>Good Range</th>
+                                <th>Interpretation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ANM B-factors vs X-ray B-factors</td>
+                                <td>R² = 0.4-0.6</td>
+                                <td>0.5-0.7 excellent</td>
+                                <td>Captures backbone flexibility trends</td>
+                            </tr>
+                            <tr>
+                                <td>Predicted hinges vs HDX-MS</td>
+                                <td>r > 0.6</td>
+                                <td>0.7-0.9 excellent</td>
+                                <td>Flexible regions show high deuterium uptake</td>
+                            </tr>
+                            <tr>
+                                <td>PRS hubs vs mutation effects</td>
+                                <td>70-80% overlap</td>
+                                <td>80-90% excellent</td>
+                                <td>Hub mutations show functional changes</td>
+                            </tr>
+                            <tr>
+                                <td>Deformation mode overlap</td>
+                                <td>>70% cumulative variance</td>
+                                <td>>80% excellent</td>
+                                <td>Conformational change accessible by ANM</td>
+                            </tr>
+                            <tr>
+                                <td>Contact persistence vs binding affinity</td>
+                                <td>r = 0.5-0.7</td>
+                                <td>0.7-0.85 excellent</td>
+                                <td>Stable contacts → high affinity</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4 class="mt-4"><i class="fas fa-exclamation-triangle"></i> Common Pitfalls & Solutions</h4>
+                    
+                    <div class="accordion" id="pitfallsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pitfall1">
+                                    <strong>Pitfall 1:</strong> Poor B-factor correlation (R² < 0.3)
+                                </button>
+                            </h2>
+                            <div id="pitfall1" class="accordion-collapse collapse show" data-bs-parent="#pitfallsAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Possible Causes:</strong></p>
+                                    <ul>
+                                        <li>Low-resolution crystal structure (>3.0 Å)</li>
+                                        <li>Crystal packing artifacts affecting B-factors</li>
+                                        <li>Missing or disordered regions in crystal</li>
+                                    </ul>
+                                    <p><strong>Solutions:</strong></p>
+                                    <ul>
+                                        <li>Compare with NMR ensemble or HDX-MS data</li>
+                                        <li>Use higher-resolution structure if available</li>
+                                        <li>Focus on correlation in ordered regions only</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pitfall2">
+                                    <strong>Pitfall 2:</strong> No clear domain structure detected
+                                </button>
+                            </h2>
+                            <div id="pitfall2" class="accordion-collapse collapse" data-bs-parent="#pitfallsAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Possible Causes:</strong></p>
+                                    <ul>
+                                        <li>Protein too small (<80 residues)</li>
+                                        <li>Domain threshold too stringent</li>
+                                        <li>Non-contiguous domain structure</li>
+                                    </ul>
+                                    <p><strong>Solutions:</strong></p>
+                                    <ul>
+                                        <li>Adjust domain threshold (try 0.3-0.5 range)</li>
+                                        <li>Compare with SCOP/CATH domain definitions</li>
+                                        <li>Use visual inspection of correlation heatmap</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pitfall3">
+                                    <strong>Pitfall 3:</strong> PRS hubs don't match known allosteric sites
+                                </button>
+                            </h2>
+                            <div id="pitfall3" class="accordion-collapse collapse" data-bs-parent="#pitfallsAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Possible Causes:</strong></p>
+                                    <ul>
+                                        <li>Using wrong conformational state (need active/regulatory state)</li>
+                                        <li>Ligand binding reshapes allosteric network</li>
+                                        <li>Top 10 hubs may not include all regulatory sites (check top 20-30)</li>
+                                    </ul>
+                                    <p><strong>Solutions:</strong></p>
+                                    <ul>
+                                        <li>Run PRS on ligand-bound structure if available</li>
+                                        <li>Use ANM comparison to see how binding changes network</li>
+                                        <li>Look for pathway connectivity, not just hub ranking</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success mt-4">
+                        <h5><i class="fas fa-graduation-cap"></i> Best Practice Summary</h5>
+                        <ol class="mb-0">
+                            <li><strong>Multiple Validation Sources:</strong> Never rely on single validation method</li>
+                            <li><strong>Biological Context:</strong> Predictions must make sense for protein function</li>
+                            <li><strong>Literature Cross-Check:</strong> Always compare with published studies on same protein family</li>
+                            <li><strong>Quantitative Metrics:</strong> Use correlation coefficients, overlap percentages, RMSD</li>
+                            <li><strong>Iterative Refinement:</strong> Adjust parameters based on validation results</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Tab -->
+            <div class="tab-pane fade" id="faq" role="tabpanel">
+                <div class="card main-card">
+                    <h3><i class="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-clock"></i> Q: How long does each analysis take?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong> Runtime depends on protein size, number of modes, and selected modules. For proteins up to 600–800 residues, typical runtimes on standard CPU hardware are:
+                            <ul style="margin-top: 10px;">
+                                <li><strong>Normal Mode / ProDy NMA:</strong> ~2–6 minutes (eigen-decomposition + PCA)</li>
+                                <li><strong>Domain & Hinge Analysis:</strong> ~2–4 minutes</li>
+                                <li><strong>Pocket Dynamics:</strong> ~3–5 minutes (SASA + volume fluctuations)</li>
+                                <li><strong>PRS Analysis:</strong> ~5–10 minutes (NxN perturbation matrix)</li>
+                                <li><strong>Contact Stability / Persistence:</strong> ~1–3 minutes (geometric analysis + per-conformer evaluation)</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><strong>Note:</strong> For large proteins (>1000 residues), PRS and NMA may take 10–20+ minutes due to matrix scaling. For very large systems (>1500–2000 residues), users should run the standalone Python scripts locally, where memory and time constraints are not restricted by the web environment.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-robot"></i> Q: Can I use AlphaFold structures?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong> Yes. DynaMune accepts AlphaFold models, with the following considerations:
+                            <ul style="margin-top: 10px;">
+                                <li>Use high-confidence regions (pLDDT > 70) for interpreting domain motions and hinge regions.</li>
+                                <li>Low pLDDT segments behave like IDRs, often showing high flexibility in NMA—validate with NMR/HDX data when available.</li>
+                                <li>AlphaFold provides a single conformational state; for apo/holo or multi-state comparisons, experimental structures remain more reliable.</li>
+                                <li>AlphaFold-Multimer is suitable for stable complexes but not for weak/transient interactions—validate through docking literature or experimental complexes.</li>
+                                <li>When available, compare ANM/GNM fluctuations with B-factors from PDB structures for additional validation.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-file-code"></i> Q: What file formats are supported?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong> DynaMune accepts:
+                            <ul style="margin-top: 10px;">
+                                <li><strong>PDB (.pdb)</strong> — primary supported format</li>
+                                <li><strong>Multi-chain complexes</strong> — fully supported</li>
+                                <li><strong>Chain selection</strong> — users can specify chains for interface and comparative analyses</li>
+                                <li><strong>Alternate locations</strong> — first altloc is selected automatically</li>
+                                <li><strong>Modified residues</strong> — standard amino acids preferred; heteroatoms can be retained or stripped depending on analysis needs</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><strong>Not supported via web interface:</strong> mmCIF/PDBx. (Users may convert using <code>pdb-tools</code>, PyMOL, or the RCSB converter.) Local scripts support both PDB and mmCIF.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-cogs"></i> Q: What do gamma and cutoff parameters mean?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li><strong>Gamma (γ):</strong> Spring constant in ANM/GNM.
+                                    <ul>
+                                        <li>Default = 1.0.</li>
+                                        <li>Higher values (2–5) → stiffer network; lower values (0.5–0.9) → softer.</li>
+                                        <li>Can be tuned to improve experimental B-factor correlation.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Cutoff distance:</strong> Cα–Cα distance threshold for defining ENM edges.
+                                    <ul>
+                                        <li>GNM default = 10 Å; ANM default = 15 Å.</li>
+                                        <li>Smaller cutoffs emphasize local motions; larger cutoffs incorporate long-range allosteric links.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Hinge percentile:</strong> Threshold for identifying rigid hinge residues.
+                                    <ul>
+                                        <li>Default = 10% (bottom 10% of mobility).</li>
+                                        <li>Lower → only strongest hinges; higher → broader hinge set.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-chart-line"></i> Q: How do I interpret low mode overlap (<30%)?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li><strong><30% overlap:</strong> Large binding-induced dynamical reorganization; indicates allosteric or induced-fit behavior.</li>
+                                <li><strong>30–60% overlap:</strong> Moderate remodeling; several intrinsic modes reused but redistributed.</li>
+                                <li><strong>>60% overlap:</strong> Dynamics largely preserved; typical for rigid lock-and-key complexes.</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><strong>Example:</strong> Kinases, GPCRs, and other multi-state signaling proteins frequently show <30% overlap between inactive and active states.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-exclamation-triangle"></i> Q: My B-factor correlation is low (R² < 0.3). What does it mean?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong> Low correlation can occur for several well-known reasons:
+                            <ul style="margin-top: 10px;">
+                                <li>Crystal contacts distort flexibility patterns; consider normalized B-factors.</li>
+                                <li>Missing loops in crystallographic data lower correlation; exclude unresolved regions.</li>
+                                <li>Gamma tuning may improve agreement.</li>
+                                <li>Proteins with multiple states cannot be fully captured by a single harmonic model.</li>
+                                <li>Intrinsically disordered regions show poor correspondence due to ENM harmonic assumptions.</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><strong>Typical ranges:</strong></p>
+                            <ul>
+                                <li>Globular enzymes: 0.4–0.6</li>
+                                <li>Membrane proteins: 0.3–0.5</li>
+                                <li>Highly flexible / IDPs: 0.1–0.3</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-share-alt"></i> Q: Can I export results for publication?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong> Yes. DynaMune outputs include:
+                            <ul style="margin-top: 10px;">
+                                <li><strong>PNG:</strong> High-resolution plots and visualizations</li>
+                                <li><strong>CSV:</strong> Numerical data tables for further analysis</li>
+                                <li><strong>TXT:</strong> Text-based reports and summaries</li>
+                            </ul>
+                            <p style="margin-top: 10px;">All outputs can be downloaded directly from the Results page.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-server"></i> Q: Is there a computational limit?
+                        </div>
+                        <div class="faq-answer">
+                            <strong>A:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li><strong>Protein size limit (web):</strong> Up to ~1500–2000 residues (depending on module).</li>
+                                <li><strong>Upload size limit:</strong> 50 MB</li>
+                                <li><strong>Concurrency:</strong> One job per session (multiple browser tabs allowed)</li>
+                                <li><strong>Result retention:</strong> 24 hours</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><strong>For very large systems</strong> (e.g., full antibodies, viral capsid components, megadalton assemblies), users should:</p>
+                            <ul>
+                                <li>Run analyses locally using the standalone DynaMune scripts,</li>
+                                <li>Use coarse-grained domain segmentation, or</li>
+                                <li>Analyze subunits individually.</li>
+                            </ul>
+                            <p style="margin-top: 10px;">This avoids memory/time constraints of the online service.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container text-center">
+            <p>&copy; 2025 DynaMune - Comprehensive Protein Dynamics Analysis Platform</p>
+            <p class="mb-0"><small>Scientific Framework based on ProDy methodology and extensive literature validation</small></p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</body>
+</html>

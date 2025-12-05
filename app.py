@@ -99,6 +99,12 @@ def index():
     return render_template('index.html', adjuvants=ADJUVANTS.keys())
 
 
+@app.route('/use_cases')
+def use_cases():
+    """Use cases and scientific validation guide"""
+    return render_template('use_cases.html')
+
+
 @app.route('/session_info')
 def session_info():
     """Get current session information - creates session if doesn't exist"""
@@ -1306,7 +1312,7 @@ def run_standalone_nma():
                '--method', method, '--nmodes', str(n_modes), '--conformers', str(conformers),
                '--cutoff', str(cutoff), '--gamma', str(gamma), '--interface-cutoff', str(interface_cutoff),
                '--ensemble-pca', '--allosteric', '--clustenmd']
-        
+                                                                                                                                                                                                                                                                    
         # Run ProDy NMA analysis
         import subprocess
         result = subprocess.run(
