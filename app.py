@@ -1313,7 +1313,7 @@ def run_standalone_nma():
                '--cutoff', str(cutoff), '--gamma', str(gamma), '--interface-cutoff', str(interface_cutoff),
                '--ensemble-pca', '--allosteric', '--clustenmd']
                                                                                                                                                                                                                                                                     
-        # Run ProDy NMA analysis
+        # Run ProDy NMA analysis                                
         import subprocess
         result = subprocess.run(
             cmd,
