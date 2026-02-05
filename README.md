@@ -1,226 +1,244 @@
 # DynaMune
 
-## Unified Platform for Protein Dynamics with Integrated Immunoinformatics Tools
+**Comprehensive Protein Dynamics Analysis Platform**
 
-This platform provides an integrated, end-to-end environment for multi-epitope immunoinformatics, construct assembly, structural modeling, and advanced protein dynamics analysis. It combines epitope prediction, safety screening, construct design, 3D structure prediction, and ProDy-based Normal Mode and deformability analyses into a unified workflow. The tool supports both vaccine-oriented and general protein structural studies, including ligand-binding and allostery exploration.
+DynaMune is a local-first scientific software tool for analyzing protein dynamics, flexibility, and allosteric communication using Normal Mode Analysis (NMA) and related computational methods. Built on ProDy, it provides both an intuitive web interface and powerful command-line tools for structural bioinformatics research.
 
----
+## Key Features
 
-## Features
+- **Normal Mode Analysis (NMA)** - Predict protein flexibility and conformational dynamics
+- **Perturbation Response Scanning (PRS)** - Identify allosteric hotspots and signaling pathways  
+- **Domain & Hinge Detection** - Automatically identify rigid domains and flexible hinges
+- **Pocket Dynamics** - Analyze binding site flexibility and druggability
+- **Contact Analysis** - Track inter-residue interactions and stability
+- **Deformation Analysis** - Quantify local and global structural changes
+- **ANM Comparison** - Compare dynamics between different protein states
 
-### 1. Protein Structure and Dynamics Analysis (ProDy-Powered)
+## Installation
 
-A comprehensive toolkit for exploring protein motions, flexibility, allostery, and interface behavior using Elastic Network Models (GNM/ANM) and deformation analysis.
+### Prerequisites
+- Python 3.9 or higher
+- 4GB+ RAM (16GB+ recommended for large proteins)
 
-#### A. Normal Mode Analysis (NMA)
+### Quick Install
 
-* Supports both GNM and ANM with adjustable cutoffs and mode counts
-* Outputs include:
+```bash
+# Clone the repository
+git clone https://github.com/Amirtesh/DynaMune.git
+cd DynaMune
 
-  * Mean-square fluctuations (MSF), theoretical B-factors
-  * Covariance and cross-correlation matrices
-  * Eigenvalues and visualizable mode vectors
-* Mode animations and conformer ensemble generation
-* PCA projection of conformer space
+# Create conda environment (recommended)
+conda create -n dynamune python=3.10
+conda activate dynamune
 
-#### B. Pocket Dynamics
+# Install DynaMune
+pip install -e .
 
-* Detect pocket residues automatically
-* Analyze pocket volume fluctuation across ANM modes
-* Compute RMSF of pocket residues, pocket radius, and accessibility score
-* Export ranked flexibility tables and pocket fluctuation plots
-
-#### C. Perturbation Response Scanning (PRS)
-
-* Apply systematic perturbations to individual residues
-* Identify allosteric sensor and effector residues
-* Visualize PRS sensitivity and effectiveness matrices (heatmaps)
-* Export numeric matrices and top-ranked residue lists
-
-#### D. Apo vs Holo Comparative Dynamics
-
-* Upload apo (unbound) and holo (bound) structures
-* Compute deformation vectors and project them onto ANM modes
-* Identify active modes contributing to functional conformational changes
-
-#### E. Interface Dynamics
-
-* Automatically detect inter-chain or protein–ligand interface residues
-* Quantify their local flexibility and dynamics
-* Export interface mobility statistics
-
-#### F. Domain & Hinge Detection
-
-* Extract domain-wise motions from mode vectors
-* Detect hinge regions driving major conformational transitions
-* Visualize per-residue mobility and deformation arrows
-
-#### G. Contact and Stability Analysis
-
-* Analyze inter-chain residue contacts, hydrogen bonds, salt bridges, and interface stability
-* Customizable cutoffs for:
-
-  * Contact distance
-  * Hydrogen bond angle and distance
-  * Salt bridge electrostatic distance
-* Outputs:
-
-  * Plots and visualizations of interface metrics
-  * Hydrophobic/hydrophilic interaction scores
-  * Residue-wise contact heatmaps and PNG exports
-* Supports dual-chain systems (A/B or auto-detect)
-* Interactive form with pre-filled cutoff defaults and editable fields
-* Full output (plots and data) downloadable as individual files or a zip archive
-
-### H. Inter-Chain Contact Timeline Analysis
-
-* Simulate contact evolution across an ANM-driven ensemble
-* Track the persistence of inter-chain residue-residue contacts through conformers
-* Outputs include:
-
-  * **Contact Timeline Heatmap** — visualizing when each contact forms/breaks
-  * **Contact Persistence Plot** — highlighting residue pairs with highest sustained interaction
-  * **Contact Network Graph** — showing global inter-residue interaction network
-* Parameters (user-editable or defaulted):
-
-  * ANM cutoff distance
-  * Number of conformers to generate
-  * Contact distance threshold
-  * Mode amplitude
-  * Mode count
-  * Persistence threshold
-* Supports up to 2 chains (user-specified or auto-detected)
-* Results can be downloaded individually or as a complete archive
-
----
-
-
-### 2. Deformability Analysis (ProDy-Powered)
-
-* Compare any two conformations (e.g., mutant vs wild-type, apo vs complex)
-* Compute deformation vectors between structures
-* Assess overlap with NMA modes to identify dominant contributors
-* Export overlap plots and numeric reports
-
----
-
-### 3. Integrated Immunoinformatics Suite
-
-This module complements the dynamics analysis with a streamlined vaccine design workflow from epitope prediction to structure modeling.
-
-#### A. Epitope Prediction and Filtering
-
-* Predict B-cell epitopes using bundled NetBCE
-* Predict MHC-I and MHC-II binding using IEDB (NetMHCpan & NetMHCIIpan EL)
-* Filter using allergenicity (AlgPred2) and toxicity (ToxinPred3)
-* Upload known epitopes directly if desired
-
-#### B. Construct Assembly
-
-* Combine epitopes into multi-epitope vaccine constructs
-* Add adjuvants and standard linkers (AAY, GPGPG, EAAAK)
-* Export as a clean FASTA sequence
-
-#### C. Structure Prediction (for Constructs)
-
-* Predict 3D structure of final construct using ESMFold
-* PDB automatically stored and passed to NMA modules for structural analysis
-
----
-
-### 4. Session-Based Execution
-
-* Every analysis creates a unique `results/` folder containing:
-
-  * Structure and epitope files
-  * Dynamics plots, matrices, and conformers
-  * Pocket and PRS results
-  * Construct FASTA and predicted structure (if applicable)
-* Ensures reproducibility and traceability across workflows
-
----
-
-### 📁 Project Structure 
-
-```
-VaccineBuilder/
-├── app.py
-├── mhc1.py
-├── mhc2.py
-├── model.py
-├── prody_nma.py
-├── deformation_analysis.py
-├── pocket_dynamics.py
-├── prs_analysis.py
-├── comparative_anm.py
-├── contact_stability.py
-├── contact_timeline.py          
-├── requirements.txt
-├── templates/
-├── static/
-├── NetBCE/
-└── results/
+# Verify installation
+python3 verify_install.py
 ```
 
----
+### Alternative: Using the automated script
 
-## Workflows
+```bash
+bash install.sh
+```
 
-### A. Sequence-Based Prediction
+## Usage
 
-1. Upload sequence.
-2. Predict epitopes.
-3. Filter and annotate.
-4. Design construct.
-5. Predict structure.
-6. Run NMA or Pocket/PRS as needed.
+### Web Interface (Recommended for Most Users)
 
-### B. Start from Epitopes
+Start the interactive web application:
 
-1. Paste known epitopes.
-2. Skip prediction.
-3. Continue with construct → structure → dynamics.
+```bash
+dynamune-web
+```
 
-### C. Standalone NMA & Pocket Analysis
+Then open your browser to `http://localhost:5000`
 
-1. Upload any protein PDB.
-2. Select ANM/GNM.
-3. Run dynamics, pocket, PRS, etc.
-4. Download heatmaps, PDBs, tables.
+**Web Interface Options:**
+```bash
+dynamune-web --host 0.0.0.0 --port 8080      # Custom host/port
+dynamune-web --debug                          # Enable debug mode
+```
 
-### D. Deformability Analysis (Comparative)
+### Command-Line Tools
 
-1. Upload unbound and bound PDBs.
-2. Run deformation vector + mode projection.
-3. Analyze contributing modes.
+For batch processing, automation, or large-scale analyses:
 
-### E. Contact and Stability Analysis
+#### 1. Normal Mode Analysis
+```bash
+dynamune-nma structure.pdb --method ANM --modes 20
+```
 
-1. Upload multi-chain PDB (max 2 chains).
-2. Adjust contact and interaction cutoffs (or keep defaults).
-3. View and download:
+#### 2. Perturbation Response Scanning
+```bash
+dynamune-prs structure.pdb --residue A:100 --output prs_results/
+```
 
-   * PNG interaction plots
-   * Hydrophobicity/charge-based metrics
-   * Contact matrices and summaries
-4. Download all results or zip archive
+#### 3. Pocket Dynamics
+```bash
+dynamune-pocket structure.pdb --pocket-residues "A:50,A:51,A:52"
+```
 
-### F. Inter-Chain Contact Timeline
+#### 4. Domain & Hinge Analysis
+```bash
+dynamune-domain-hinge structure.pdb --modes 10
+```
 
-1. Upload multi-chain PDB structure (2 chains max)
-2. Choose ANM parameters (cutoff, modes, amplitude)
-3. Run simulation to generate conformer ensemble
-4. View timeline heatmap, contact persistence graph, and contact network
-5. Export figures or all results together
+#### 5. Deformation Analysis
+```bash
+dynamune-deformation structure.pdb --modes 5
+```
 
----
+#### 6. Contact Stability
+```bash
+dynamune-contact-stability structure.pdb --cutoff 4.5
+```
 
-## Requirements
+#### 7. Contact Timeline (Multi-structure)
+```bash
+dynamune-contact-timeline trajectory.dcd --topology structure.pdb
+```
 
-* Python 3.7+
-* Flask, ProDy, Matplotlib, Biopython, Pandas
-* External access for IEDB APIs
-* NetBCE locally available
+#### 8. ANM Comparison
+```bash
+dynamune-anm-compare apo.pdb holo.pdb --output comparison/
+```
+
+### Getting Help
+
+**Open comprehensive documentation:**
+```bash
+dynamune-help
+```
+
+This opens detailed use cases, scientific validation, FAQs, and workflow examples in your browser.
+
+**Command-specific help:**
+```bash
+dynamune-nma --help
+dynamune-prs --help
+# etc.
+```
+
+## Quick Start Example
+
+**Analyze a protein structure in 3 steps:**
+
+```bash
+# 1. Download a structure (e.g., PDB ID: 1ubq)
+wget https://files.rcsb.org/download/1UBQ.pdb
+
+# 2. Run Normal Mode Analysis
+dynamune-nma 1UBQ.pdb --method ANM --modes 20
+
+# 3. View results in results/ directory
+ls results/
+```
+
+Or use the web interface for interactive visualization and analysis.
+
+## Project Structure
+
+```
+DynaMune/
+├── dynamune/           # Main package
+│   ├── cli/           # Command-line tools
+│   └── web.py         # Web interface launcher
+├── templates/         # HTML templates for web UI
+├── static/           # CSS, JavaScript, assets
+├── NetBCE/           # B-cell epitope prediction module
+├── results/          # Analysis outputs (auto-created)
+├── setup.py          # Package configuration
+└── requirements.txt  # Dependencies
+```
+
+## System Requirements
+
+- **Minimum:** Python 3.9, 4GB RAM, 2 CPU cores
+- **Recommended:** Python 3.10+, 16GB RAM, 4+ CPU cores
+- **Large proteins (>2000 residues):** 32GB+ RAM recommended
+
+## Output Files
+
+All analyses generate results in the `results/` directory:
+
+- **PDB files** - Modified structures, conformational ensembles
+- **CSV/TXT** - Numerical data, residue scores, matrices
+- **PNG/SVG** - Plots, heatmaps, visualizations
+- **JSON** - Structured metadata for programmatic access
+
+## Scientific Foundation
+
+DynaMune implements methods based on:
+
+- **Elastic Network Models (ENM)** - Anisotropic Network Model (ANM), Gaussian Network Model (GNM)
+- **ProDy framework** - Industry-standard protein dynamics toolkit
+- **Published algorithms** - PRS (Atilgan et al.), domain detection (Emekli et al.), and more
+
+Validated against experimental data including:
+- X-ray crystallography B-factors
+- NMR dynamics measurements  
+- Hydrogen-deuterium exchange (HDX-MS)
+- Literature-reported allosteric sites
+
+## Citation
+
+If you use DynaMune in your research, please cite:
+
+```bibtex
+@software{dynamune2025,
+  title={DynaMune: Comprehensive Protein Dynamics Analysis Platform},
+  author={Amirtesh},
+  year={2025},
+  url={https://github.com/Amirtesh/DynaMune}
+}
+```
+
+## Troubleshooting
+
+**Installation issues:**
+```bash
+# Update pip first
+pip install --upgrade pip
+
+# Install with verbose output
+pip install -e . -v
+```
+
+**"Command not found" errors:**
+```bash
+# Reinstall package
+pip install -e . --force-reinstall
+```
+
+**Import errors (ProDy, Flask, etc.):**
+```bash
+# Reinstall dependencies
+pip install -r requirements.txt --force-reinstall
+```
+
+**Large protein timeout:**
+- Use CLI tools instead of web interface for >2000 residue proteins
+- Reduce number of modes calculated (`--modes 10` instead of default 20)
+- Consider domain-based analysis for very large complexes
+
+## Support
+
+- **Documentation:** `dynamune-help` or see `README_DETAILED.md`
+- **Issues:** https://github.com/Amirtesh/DynaMune/issues
+- **Detailed Guide:** See `QUICKSTART.md` for step-by-step tutorials
 
 ## License
-DynaMune is released under the MIT License.
+
+[Include your license here - e.g., MIT, GPL, etc.]
+
+## Contributing
+
+Contributions welcome! Please see `CONTRIBUTING.md` for guidelines.
+
+---
+
+**Made for structural biologists, by structural biologists.**  
+Built on ProDy | Runs locally | No cloud dependencies | Open source

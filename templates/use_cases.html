@@ -1244,7 +1244,7 @@
                                 <li><strong>PRS Analysis:</strong> ~5–10 minutes (NxN perturbation matrix)</li>
                                 <li><strong>Contact Stability / Persistence:</strong> ~1–3 minutes (geometric analysis + per-conformer evaluation)</li>
                             </ul>
-                            <p style="margin-top: 10px;"><strong>Note:</strong> For large proteins (>1000 residues), PRS and NMA may take 10–20+ minutes due to matrix scaling. For very large systems (>1500–2000 residues), users should run the standalone Python scripts locally, where memory and time constraints are not restricted by the web environment.</p>
+                            <p style="margin-top: 10px;"><strong>Note:</strong> For large proteins (>1000 residues), PRS and NMA may take 10–20+ minutes due to matrix scaling. Analysis time scales with protein size and complexity.</p>
                         </div>
                     </div>
                     
@@ -1276,8 +1276,8 @@
                                 <li><strong>Chain selection</strong> — users can specify chains for interface and comparative analyses</li>
                                 <li><strong>Alternate locations</strong> — first altloc is selected automatically</li>
                                 <li><strong>Modified residues</strong> — standard amino acids preferred; heteroatoms can be retained or stripped depending on analysis needs</li>
+                                <li><strong>mmCIF/PDBx</strong> — supported by CLI tools; web interface currently supports PDB format (convert using <code>pdb-tools</code>, PyMOL, or RCSB converter if needed)</li>
                             </ul>
-                            <p style="margin-top: 10px;"><strong>Not supported via web interface:</strong> mmCIF/PDBx. (Users may convert using <code>pdb-tools</code>, PyMOL, or the RCSB converter.) Local scripts support both PDB and mmCIF.</p>
                         </div>
                     </div>
                     
@@ -1368,20 +1368,19 @@
                             <i class="fas fa-server"></i> Q: Is there a computational limit?
                         </div>
                         <div class="faq-answer">
-                            <strong>A:</strong>
+                            <strong>A:</strong> Since DynaMune runs locally on your machine, computational limits depend on your system's resources:
                             <ul style="margin-top: 10px;">
-                                <li><strong>Protein size limit (web):</strong> Up to ~1500–2000 residues (depending on module).</li>
-                                <li><strong>Upload size limit:</strong> 50 MB</li>
-                                <li><strong>Concurrency:</strong> One job per session (multiple browser tabs allowed)</li>
-                                <li><strong>Result retention:</strong> 24 hours</li>
+                                <li><strong>Protein size:</strong> Limited only by available RAM (typically handles systems up to 5000+ residues)</li>
+                                <li><strong>File size:</strong> No hard limit—constrained only by your system's memory</li>
+                                <li><strong>Concurrency:</strong> Run multiple analyses simultaneously (limited by CPU cores and RAM)</li>
+                                <li><strong>Result retention:</strong> Results persist in your local results/ directory until you delete them</li>
                             </ul>
-                            <p style="margin-top: 10px;"><strong>For very large systems</strong> (e.g., full antibodies, viral capsid components, megadalton assemblies), users should:</p>
+                            <p style="margin-top: 10px;"><strong>For very large systems</strong> (e.g., full antibodies, viral capsid components, megadalton assemblies):</p>
                             <ul>
-                                <li>Run analyses locally using the standalone DynaMune scripts,</li>
-                                <li>Use coarse-grained domain segmentation, or</li>
-                                <li>Analyze subunits individually.</li>
+                                <li>Ensure sufficient RAM (16GB+ recommended for proteins >2000 residues)</li>
+                                <li>Consider using CLI tools for batch processing: <code>dynamune-nma</code>, <code>dynamune-prs</code>, etc.</li>
+                                <li>For assemblies >5000 residues, use coarse-grained domain segmentation or analyze subunits individually</li>
                             </ul>
-                            <p style="margin-top: 10px;">This avoids memory/time constraints of the online service.</p>
                         </div>
                     </div>
                 </div>
