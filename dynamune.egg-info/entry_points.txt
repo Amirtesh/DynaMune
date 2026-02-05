@@ -1,0 +1,11 @@
+[console_scripts]
+dynamune-anm-compare = dynamune.cli.anm_comparison:main
+dynamune-contact-stability = dynamune.cli.contact_stability:main
+dynamune-contact-timeline = dynamune.cli.contact_timeline:main
+dynamune-deformation = dynamune.cli.deformation:main
+dynamune-domain-hinge = dynamune.cli.domain_hinge:main
+dynamune-help = dynamune.cli.help:main
+dynamune-nma = dynamune.cli.nma:main
+dynamune-pocket = dynamune.cli.pocket_dynamics:main
+dynamune-prs = dynamune.cli.prs:main
+dynamune-web = dynamune.web:main
