@@ -221,3 +221,6 @@ VaccineBuilder/
 * Flask, ProDy, Matplotlib, Biopython, Pandas
 * External access for IEDB APIs
 * NetBCE locally available
+
+## License
+DynaMune is released under the MIT License.
