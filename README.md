@@ -166,8 +166,7 @@ All analyses generate results in the `results/` directory:
 
 - **PDB files** - Modified structures, conformational ensembles
 - **CSV/TXT** - Numerical data, residue scores, matrices
-- **PNG/SVG** - Plots, heatmaps, visualizations
-- **JSON** - Structured metadata for programmatic access
+- **PNG** - Plots, heatmaps, visualizations
 
 ## Scientific Foundation
 
