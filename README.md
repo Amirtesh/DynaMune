@@ -1,44 +1,66 @@
 # DynaMune
 
-**Comprehensive Protein Dynamics Analysis Platform**
+**DynaMune** is an integrated, ensemble-based protein dynamics analysis platform
+built on elastic network models (ENM) and normal mode analysis (NMA). It provides
+a unified, reproducible workflow for analyzing collective motions, allosteric
+coupling, domain and hinge behavior, deformation patterns, pocket dynamics, and
+protein–protein interface interactions without the computational cost of
+molecular dynamics simulations.
 
-DynaMune is a local-first scientific software tool for analyzing protein dynamics, flexibility, and allosteric communication using Normal Mode Analysis (NMA) and related computational methods. Built on ProDy, it provides both an intuitive web interface and powerful command-line tools for structural bioinformatics research.
+The platform is implemented in Python, uses ProDy as its computational backbone,
+and supports both command-line and optional web-based interfaces.
 
-## Key Features
+---
 
-- **Normal Mode Analysis (NMA)** - Predict protein flexibility and conformational dynamics
-- **Perturbation Response Scanning (PRS)** - Identify allosteric hotspots and signaling pathways  
-- **Domain & Hinge Detection** - Automatically identify rigid domains and flexible hinges
-- **Pocket Dynamics** - Analyze binding site flexibility and druggability
-- **Contact Analysis** - Track inter-residue interactions and stability
-- **Deformation Analysis** - Quantify local and global structural changes
-- **ANM Comparison** - Compare dynamics between different protein states
+## Scope of the JOSS submission
+
+The JOSS paper associated with this repository describes the **core DynaMune
+protein dynamics framework**, implemented under the `dynamune/` package and its
+associated command-line tools.
+
+The Flask-based web interface and immunoinformatics utilities (e.g., NetBCE, MHC
+modules) included in this repository are **optional extensions** provided for
+interactive exploration and demonstration purposes. These components are **not
+required** for core DynaMune functionality and are **not part of the primary
+software scope evaluated in the JOSS submission**.
+
+---
+
+## Key features
+
+### Core protein dynamics analysis
+- Elastic network models (GNM and ANM)
+- Normal mode analysis (NMA)
+- Principal component analysis (PCA)
+- Ensemble generation for statistical interpretation
+- Perturbation response scanning (PRS)
+- Domain and hinge residue identification
+- Deformation and flexibility mapping
+- Pocket dynamics analysis
+- Apo–complex comparative dynamics
+
+### Interface analysis
+- Automated identification of protein–protein interface contacts
+- Non-covalent interaction extraction (hydrogen bonds, salt bridges, disulfides)
+- Interface contact stability and summary statistics
+
+### Interfaces
+- Command-line interface for reproducible batch workflows
+- Optional Flask-based web interface for interactive exploration
+
+---
 
 ## Installation
 
-### Prerequisites
-- Python 3.9 or higher
-- 4GB+ RAM (16GB+ recommended for large proteins)
-
-### Quick Install
+Clone the repository and install dependencies:
 
 ```bash
-# Clone the repository
 git clone https://github.com/Amirtesh/DynaMune.git
 cd DynaMune
-
-# Create conda environment (recommended)
-conda create -n dynamune python=3.10
-conda activate dynamune
-
-# Install DynaMune
-pip install -e .
-
-# Verify installation
-python3 verify_install.py
+pip install -r requirements.txt
 ```
 
-### Alternative: Using the automated script
+Alternatively, install using the provided setup script:
 
 ```bash
 bash install.sh
@@ -46,198 +68,98 @@ bash install.sh
 
 ## Usage
 
-### Web Interface (Recommended for Most Users)
+### Primary interface: command-line interface (CLI)
 
-Start the interactive web application:
+The primary and recommended interface for DynaMune is the command-line interface,
+which supports reproducible and scriptable workflows.
 
-```bash
-dynamune-web
-```
-
-Then open your browser to `http://localhost:5000`
-
-**Web Interface Options:**
-```bash
-dynamune-web --host 0.0.0.0 --port 8080      # Custom host/port
-dynamune-web --debug                          # Enable debug mode
-```
-
-### Command-Line Tools
-
-For batch processing, automation, or large-scale analyses:
-
-#### 1. Normal Mode Analysis
-```bash
-dynamune-nma structure.pdb --method ANM --modes 20
-```
-
-#### 2. Perturbation Response Scanning
-```bash
-dynamune-prs structure.pdb --residue A:100 --output prs_results/
-```
-
-#### 3. Pocket Dynamics
-```bash
-dynamune-pocket structure.pdb --pocket-residues "A:50,A:51,A:52"
-```
-
-#### 4. Domain & Hinge Analysis
-```bash
-dynamune-domain-hinge structure.pdb --modes 10
-```
-
-#### 5. Deformation Analysis
-```bash
-dynamune-deformation structure.pdb --modes 5
-```
-
-#### 6. Contact Stability
-```bash
-dynamune-contact-stability structure.pdb --cutoff 4.5
-```
-
-#### 7. Contact Timeline (Multi-structure)
-```bash
-dynamune-contact-timeline trajectory.dcd --topology structure.pdb
-```
-
-#### 8. ANM Comparison
-```bash
-dynamune-anm-compare apo.pdb holo.pdb --output comparison/
-```
-
-### Getting Help
-
-**Open comprehensive documentation:**
-```bash
-dynamune-help
-```
-
-This opens detailed use cases, scientific validation, FAQs, and workflow examples in your browser.
-
-**Command-specific help:**
-```bash
-dynamune-nma --help
-dynamune-prs --help
-# etc.
-```
-
-## Quick Start Example
-
-**Analyze a protein structure in 3 steps:**
+Example:
 
 ```bash
-# 1. Download a structure (e.g., PDB ID: 1ubq)
-wget https://files.rcsb.org/download/1UBQ.pdb
-
-# 2. Run Normal Mode Analysis
-dynamune-nma 1UBQ.pdb --method ANM --modes 20
-
-# 3. View results in results/ directory
-ls results/
+dynamune nma --pdb input.pdb --chain A
 ```
 
-Or use the web interface for interactive visualization and analysis.
+Available modules include:
 
-## Project Structure
+- `nma`
+- `prs`
+- `domain_hinge`
+- `deformation`
+- `pocket_dynamics`
+- `contact_stability`
+- `contact_timeline`
 
-```
-DynaMune/
-├── dynamune/           # Main package
-│   ├── cli/           # Command-line tools
-│   └── web.py         # Web interface launcher
-├── templates/         # HTML templates for web UI
-├── static/           # CSS, JavaScript, assets
-├── NetBCE/           # B-cell epitope prediction module
-├── results/          # Analysis outputs (auto-created)
-├── setup.py          # Package configuration
-└── requirements.txt  # Dependencies
-```
+Use the built-in help for details:
 
-## System Requirements
-
-- **Minimum:** Python 3.9, 4GB RAM, 2 CPU cores
-- **Recommended:** Python 3.10+, 16GB RAM, 4+ CPU cores
-- **Large proteins (>2000 residues):** 32GB+ RAM recommended
-
-## Output Files
-
-All analyses generate results in the `results/` directory:
-
-- **PDB files** - Modified structures, conformational ensembles
-- **CSV/TXT** - Numerical data, residue scores, matrices
-- **PNG** - Plots, heatmaps, visualizations
-
-## Scientific Foundation
-
-DynaMune implements methods based on:
-
-- **Elastic Network Models (ENM)** - Anisotropic Network Model (ANM), Gaussian Network Model (GNM)
-- **ProDy framework** - Industry-standard protein dynamics toolkit
-- **Published algorithms** - PRS (Atilgan et al.), domain detection (Emekli et al.), and more
-
-Validated against experimental data including:
-- X-ray crystallography B-factors
-- NMR dynamics measurements  
-- Hydrogen-deuterium exchange (HDX-MS)
-- Literature-reported allosteric sites
-
-## Citation
-
-If you use DynaMune in your research, please cite:
-
-```bibtex
-@software{dynamune2025,
-  title={DynaMune: Comprehensive Protein Dynamics Analysis Platform},
-  author={Amirtesh},
-  year={2025},
-  url={https://github.com/Amirtesh/DynaMune}
-}
-```
-
-## Troubleshooting
-
-**Installation issues:**
 ```bash
-# Update pip first
-pip install --upgrade pip
-
-# Install with verbose output
-pip install -e . -v
+dynamune help
 ```
 
-**"Command not found" errors:**
+### Optional web interface (interactive frontend)
+
+An optional Flask-based web interface is provided for interactive analysis and
+visual exploration. This interface is not required for batch execution or
+reproducible workflows.
+
+To launch the web application:
+
 ```bash
-# Reinstall package
-pip install -e . --force-reinstall
+python app.py
 ```
 
-**Import errors (ProDy, Flask, etc.):**
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-**Large protein timeout:**
-- Use CLI tools instead of web interface for >2000 residue proteins
-- Reduce number of modes calculated (`--modes 10` instead of default 20)
-- Consider domain-based analysis for very large complexes
-
-## Support
-
-For comprehensive documentation, use cases, and FAQs:
-```bash
-dynamune-help
-```
-
-Report issues: https://github.com/Amirtesh/DynaMune/issues
-
-## License
-
-DynaMune is released under the MIT License.
-
+The web interface exposes selected DynaMune modules through a browser-based UI
+and is intended for exploratory use and demonstrations.
 
 ---
 
-**Made for structural biologists, by structural biologists.**  
-Built on ProDy | Runs locally | No cloud dependencies | Open source
+## Verification
+
+Basic installation and functionality can be verified using:
+
+```bash
+python verify_install.py
+```
+
+This script checks core dependencies and validates that key analysis modules can
+be executed successfully.
+
+Representative validation case studies are documented in the JOSS paper and
+accompanying figures.
+
+---
+
+## Repository structure (simplified)
+
+```
+DynaMune/
+├── dynamune/           # Core DynaMune package (CLI + analysis modules)
+├── figures/            # Figures used in the JOSS paper
+├── paper.md            # JOSS manuscript
+├── paper.bib           # Bibliography
+├── app.py              # Optional Flask web interface
+├── requirements.txt
+├── README.md
+└── LICENSE
+```
+
+Additional directories (e.g., NetBCE, MHC utilities) provide optional extensions
+and are not required for core protein dynamics analysis.
+
+---
+
+## Validation overview
+
+DynaMune has been evaluated on representative benchmark systems commonly used in
+protein dynamics studies, including adenylate kinase and the ACE2–SARS-CoV-2
+spike complex. These case studies demonstrate recovery of canonical domain
+motions, hinge-localized flexibility patterns, and automated extraction of
+interface interaction features consistent with prior literature.
+
+Detailed validation results are presented in the JOSS manuscript.
+
+---
+
+## License
+
+This project is released under the MIT License. See the LICENSE file for
+details.
