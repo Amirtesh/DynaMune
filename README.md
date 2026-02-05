@@ -226,17 +226,17 @@ pip install -r requirements.txt --force-reinstall
 
 ## Support
 
-- **Documentation:** `dynamune-help` or see `README_DETAILED.md`
-- **Issues:** https://github.com/Amirtesh/DynaMune/issues
-- **Detailed Guide:** See `QUICKSTART.md` for step-by-step tutorials
+For comprehensive documentation, use cases, and FAQs:
+```bash
+dynamune-help
+```
+
+Report issues: https://github.com/Amirtesh/DynaMune/issues
 
 ## License
 
-[Include your license here - e.g., MIT, GPL, etc.]
+DynaMune is released under the MIT License.
 
-## Contributing
-
-Contributions welcome! Please see `CONTRIBUTING.md` for guidelines.
 
 ---
 
