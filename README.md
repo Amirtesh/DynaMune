@@ -104,7 +104,7 @@ reproducible workflows.
 To launch the web application:
 
 ```bash
-python app.py
+dynamune web
 ```
 
 The web interface exposes selected DynaMune modules through a browser-based UI
