@@ -12,20 +12,6 @@ and supports both command-line and optional web-based interfaces.
 
 ---
 
-## Scope of the JOSS submission
-
-The JOSS paper associated with this repository describes the **core DynaMune
-protein dynamics framework**, implemented under the `dynamune/` package and its
-associated command-line tools.
-
-The Flask-based web interface and immunoinformatics utilities (e.g., NetBCE, MHC
-modules) included in this repository are **optional extensions** provided for
-interactive exploration and demonstration purposes. These components are **not
-required** for core DynaMune functionality and are **not part of the primary
-software scope evaluated in the JOSS submission**.
-
----
-
 ## Key features
 
 ### Core protein dynamics analysis
