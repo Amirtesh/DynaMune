@@ -76,7 +76,7 @@ which supports reproducible and scriptable workflows.
 Example:
 
 ```bash
-dynamune nma --pdb input.pdb --chain A
+dynamune-nma --pdb input.pdb --chain A
 ```
 
 Available modules include:
@@ -92,7 +92,7 @@ Available modules include:
 Use the built-in help for details:
 
 ```bash
-dynamune help
+dynamune-help
 ```
 
 ### Optional web interface (interactive frontend)
@@ -104,7 +104,7 @@ reproducible workflows.
 To launch the web application:
 
 ```bash
-dynamune web
+dynamune-web
 ```
 
 The web interface exposes selected DynaMune modules through a browser-based UI
