@@ -141,9 +141,6 @@ spike complex. These case studies demonstrate recovery of canonical domain
 motions, hinge-localized flexibility patterns, and automated extraction of
 interface interaction features consistent with prior literature.
 
-Representative validation examples are presented in the JOSS manuscript to
-demonstrate core functionality and expected behavior.
-
 ---
 
 ## License
